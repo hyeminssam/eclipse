@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>일식과 월식 - 가상실험</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1030; --panel:#151c47; --panel2:#1d2660; --line:#2e3a80;
+    --text:#f1f3ff; --sub:#b9c0ea; --sun:#ffd23f; --accent:#4fc3f7;
+    --good:#5be39a; --bad:#ff7a7a; --red:#ff8a5c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at top,#1a2266 0%,var(--bg) 60%);color:var(--text);
+       font-family:'Noto Sans KR',system-ui,sans-serif;font-size:20px;min-height:100vh}
+  header{padding:18px 24px 6px;text-align:center}
+  header h1{margin:0;font-size:36px;font-weight:900;letter-spacing:-1px}
+  header h1 .s{color:var(--sun)} header h1 .m{color:#d9dcf0}
+  header p{margin:6px 0 0;color:var(--sub);font-size:19px}
+
+  .tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:14px 16px 0}
+  .tab{font:inherit;font-size:22px;font-weight:700;padding:12px 24px;border-radius:14px 14px 0 0;border:2px solid var(--line);
+       border-bottom:none;background:var(--panel);color:var(--sub);cursor:pointer}
+  .tab.active{background:var(--panel2);color:#fff;border-color:var(--accent)}
+
+  main{max-width:1400px;margin:0 auto;padding:0 16px 20px}
+  .tabpanel{display:none;background:var(--panel2);border:2px solid var(--accent);border-radius:0 0 18px 18px;padding:18px}
+  .tabpanel.active{display:block}
+
+  .guide{background:rgba(79,195,247,.12);border:2px solid rgba(79,195,247,.45);border-radius:14px;padding:14px 18px;
+         font-size:21px;line-height:1.7;margin-bottom:14px}
+  .guide b{color:var(--sun)}
+  .guide ol{margin:4px 0 0;padding-left:28px}
+
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+  .layout.wide{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
+  @media (max-width:1000px){.layout,.layout.wide{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:12px}
+  .card h3{margin:0 0 8px;font-size:22px;font-weight:900}
+  .card h3 small{font-size:17px;font-weight:400;color:var(--sub)}
+  canvas{width:100%;display:block;border-radius:12px;background:#050822;touch-action:none;cursor:pointer}
+  .hint{font-size:18px;color:var(--sub);margin-top:6px}
+
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+  .btn{font:inherit;font-size:21px;font-weight:700;padding:12px 18px;border-radius:12px;border:2px solid var(--accent);
+       background:#123a5c;color:#fff;cursor:pointer}
+  .btn:hover{filter:brightness(1.15)}
+  .btn.sun{border-color:var(--sun);background:#5a4710}
+  .btn.ghost{background:transparent;border-color:var(--line);color:var(--sub)}
+  .btn.on{background:var(--accent);color:#06243a}
+  .btn.sun.on{background:var(--sun);color:#3a2c00}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .seat{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  @media (max-width:700px){.seat{grid-template-columns:1fr}}
+  .seat .btn{font-size:23px;padding:16px;text-align:left;line-height:1.4}
+  .seat .btn small{display:block;font-size:18px;font-weight:400;opacity:.9}
+
+  .speed{display:flex;gap:4px;align-items:center;font-size:19px;color:var(--sub)}
+  .speed button{font:inherit;font-size:18px;padding:8px 12px;border-radius:10px;border:2px solid var(--line);background:transparent;color:var(--sub);cursor:pointer}
+  .speed button.on{background:var(--accent);color:#06243a;border-color:var(--accent);font-weight:700}
+  .slider{display:flex;align-items:center;gap:10px;font-size:19px;flex-wrap:wrap}
+  .slider input[type=range]{width:220px;height:30px;accent-color:var(--sun)}
+  .slider .lab{color:var(--sub);font-size:17px}
+  .toggles{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:19px}
+  .toggles label{display:flex;gap:8px;align-items:center;cursor:pointer}
+  .toggles input{width:24px;height:24px;accent-color:var(--accent)}
+
+  .status{margin-top:10px;font-size:22px;font-weight:700;padding:12px 14px;border-radius:12px;background:#0f1438;
+          border:2px solid var(--line);min-height:56px;line-height:1.5}
+  .status.total{border-color:var(--sun);color:var(--sun)}
+  .status.part{border-color:var(--accent);color:#bfe9ff}
+  .status.red{border-color:var(--red);color:#ffc2a8}
+  .meter{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:19px}
+  .meter .bar{flex:1;height:22px;border-radius:11px;background:#0a0e2a;border:2px solid var(--line);overflow:hidden}
+  .meter .fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--sun))}
+  .meter b{min-width:64px;text-align:right;font-size:22px}
+
+  .strip{margin-top:14px;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:12px}
+  .strip h4{margin:0 0 8px;font-size:21px}
+  .strip h4 span{font-weight:400;color:var(--sub);font-size:17px}
+  .shots{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;min-height:40px;align-items:center}
+  .shot{position:relative;flex:0 0 auto}
+  .shot canvas{width:150px;border:2px solid var(--line);cursor:default}
+  .shot.sq canvas{width:110px}
+  .shot i{position:absolute;left:6px;top:4px;font-style:normal;font-weight:900;font-size:17px;background:rgba(0,0,0,.6);
+          color:var(--sun);padding:0 7px;border-radius:8px}
+  .shots .empty{color:var(--sub);font-size:18px}
+  .timearrow{display:flex;align-items:center;gap:8px;color:var(--sub);font-size:17px;margin-top:4px}
+  .timearrow::after{content:"";flex:1;height:2px;background:linear-gradient(90deg,var(--sub),transparent)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:18px}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .legend i{display:inline-block;width:26px;height:16px;border-radius:4px}
+
+  .sum{margin-top:18px}
+  .sum h2{font-size:26px;margin:0 0 10px;color:var(--sun)}
+  .qgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:12px}
+  @media (max-width:500px){.qgrid{grid-template-columns:1fr}}
+  .q{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:14px}
+  .q .qt{font-size:21px;font-weight:700;line-height:1.5;margin-bottom:10px}
+  .q .qt em{font-style:normal;color:var(--accent);font-size:17px;display:block;font-weight:400}
+  .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .opts button{font:inherit;font-size:20px;padding:10px 16px;border-radius:10px;border:2px solid var(--line);background:#0f1438;color:#fff;cursor:pointer}
+  .opts button.ok{background:#14532d;border-color:var(--good)}
+  .opts button.no{background:#5a1a1a;border-color:var(--bad)}
+  .fb{margin-top:10px;font-size:19px;line-height:1.6;display:none}
+  .fb.ok{display:block;color:var(--good)} .fb.no{display:block;color:var(--bad)}
+  .box{background:rgba(255,210,63,.08);border:2px dashed rgba(255,210,63,.5);border-radius:14px;padding:12px 16px;
+       margin-top:14px;font-size:20px;line-height:1.7}
+  .box b{color:var(--sun)}
+  .note{font-size:17px;color:var(--sub);margin-top:8px}
+
+  .revhead{font-size:28px;font-weight:900;color:var(--sun);margin:2px 0 14px}
+  .revhead span{display:block;font-size:21px;font-weight:700;color:#fff;margin-top:4px}
+  .remind{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:rgba(255,210,63,.1);
+          border:2px solid rgba(255,210,63,.55);border-radius:14px;padding:10px 16px;margin-bottom:12px;font-size:20px;line-height:1.6}
+  .remind b{color:var(--sun)}
+  .remind span{flex:1;min-width:260px}
+  .status.warn{border-color:var(--bad);color:#ffc4c4}
+  footer{text-align:center;color:#8f97c9;font-size:13px;line-height:1.6;padding:10px 16px 22px}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="s">태양</span>을 가린 달, <span class="m">달</span>을 가린 지구</h1>
+  <p>Ⅶ. 태양계 · 4. 일식과 월식 가상실험</p>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab active" data-tab="t1">① 모형 실험</button>
+  <button class="tab" data-tab="t2">② 일식 탐구</button>
+  <button class="tab" data-tab="t3">③ 월식 탐구</button>
+</nav>
+
+<main>
+<!-- ===================== 탭 1 : 모형 실험 ===================== -->
+<section class="tabpanel active" id="t1">
+  <!-- 0단계: 복습 -->
+  <div id="rev1">
+    <div class="revhead">🔁 실험 전에 복습해요 <span>달은 지구 주위를 어느 방향으로 공전할까요?</span></div>
+    <div class="layout">
+      <div class="card">
+        <h3>① 북극 위에서 내려다본 지구와 달</h3>
+        <canvas id="cvR1" style="aspect-ratio:500/400"></canvas>
+        <div class="hint">달이 움직이는 방향을 오른쪽 위 시계 바늘과 비교해 보세요.</div>
+      </div>
+      <div>
+        <div class="q">
+          <div class="qt">Q1. 북극 위에서 내려다볼 때, 달은 지구 주위를 어느 방향으로 공전하나요?</div>
+          <div class="opts" id="rq1"><button data-a="0">↻ 시계 방향</button><button data-a="1">↺ 시계 반대 방향</button></div>
+          <div class="fb" id="rq1fb"></div>
+        </div>
+        <div class="card" id="rstep2" style="margin-top:12px;display:none">
+          <h3>② 모형 실험에서는?</h3>
+          <canvas id="cvR2" style="aspect-ratio:500/400"></canvas>
+          <div class="guide" style="margin:10px 0 0;font-size:20px">
+            모형 실험에서 <b>관측자의 머리는 지구</b>, <b>공은 달</b>이에요.<br>
+            그래서 공도 달처럼 <b>위에서 볼 때 시계 반대 방향</b>으로 돌려야 해요.
+          </div>
+          <div class="q" style="margin-top:10px">
+            <div class="qt">Q2. 앞을 보고 앉은 관측자가 공을 시계 반대 방향으로 돌리면, 관측자 눈에는 공이 어느 쪽으로 움직일까요?</div>
+            <div class="opts" id="rq2"><button data-a="0">왼쪽 → 오른쪽</button><button data-a="1">오른쪽 → 왼쪽</button></div>
+            <div class="fb" id="rq2fb"></div>
+          </div>
+        </div>
+        <div class="controls" id="rstart" style="display:none">
+          <button class="btn sun" id="bStart" style="font-size:24px;padding:16px 26px">▶ 이제 모형 실험 시작하기</button>
+        </div>
+      </div>
+    </div>
+    <div class="controls" style="justify-content:flex-end"><button class="btn ghost" id="bSkip" style="font-size:17px;padding:8px 14px">⏭ 복습 건너뛰기</button></div>
+  </div>
+
+  <!-- 1단계: 모형 실험 -->
+  <div id="exp1" style="display:none">
+  <div class="remind"><span>📌 달은 지구 주위를 <b>시계 반대 방향</b>으로 공전해요 → 공(달)도 위에서 볼 때 <b>시계 반대 방향</b>, 관측자 눈에는 <b>오른쪽 → 왼쪽</b>으로 움직여요.</span>
+    <button class="btn ghost" id="bReview" style="font-size:17px;padding:8px 14px">🔁 복습 다시 보기</button></div>
+  <div class="guide">
+    어두운 교실에서 <b>전등</b>, 막대에 꽂은 <b>스타이로폼 공</b>, 회전의자에 앉은 <b>관측자</b>로 실험해요.
+    <ol>
+      <li><b>💡 전등을 바라보고 앉아</b> 공을 <b>오른쪽에서 왼쪽으로</b>(시계 반대 방향) 움직이며 전등이 공에 가려지는 모습을 관찰해요.</li>
+      <li><b>🔙 전등을 등지고 앉아</b> 공을 <b>오른쪽에서 왼쪽으로</b>(시계 반대 방향) 움직이며 공이 내 그림자 속으로 들어가는 모습을 관찰해요.</li>
+      <li>📸 사진을 찍어 두고, 아래 <b>정리하기</b>를 풀어 보세요.</li>
+    </ol>
+  </div>
+
+  <div class="seat">
+    <button class="btn sun on" id="seatFace">💡 전등을 바라보고 앉기<small>활동 2 · 전등이 공에 가려지는 모습</small></button>
+    <button class="btn" id="seatBack">🔙 전등을 등지고 앉기<small>활동 3 · 공이 그림자 속으로 들어가는 모습</small></button>
+  </div>
+
+  <div class="layout">
+    <div class="card">
+      <h3>🏫 위에서 내려다본 교실 <small>※ 크기와 거리는 실제와 달라요</small></h3>
+      <canvas id="cv1a" style="aspect-ratio:800/500"></canvas>
+      <div class="hint">🖐 공을 끌어서 움직여 보세요 (팔을 뻗은 채로 움직여요)</div>
+    </div>
+    <div class="card">
+      <h3>👀 관측자의 눈으로 본 모습</h3>
+      <canvas id="cv1b" style="aspect-ratio:800/450"></canvas>
+      <div class="hint">🖐 여기서도 공을 좌우로 끌 수 있어요</div>
+      <div class="meter"><span id="m1lab">전등이 가려진 정도</span><div class="bar"><div class="fill" id="m1fill"></div></div><b id="m1val">0%</b></div>
+      <div class="status" id="st1">공을 움직여 보세요.</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn sun" id="b1auto">▶ 시계 반대 방향(오른쪽 → 왼쪽)으로 천천히 움직이기</button>
+    <button class="btn ghost" id="b1reset">↺ 공을 오른쪽 끝으로</button>
+    <button class="btn" id="b1shot">📸 찰칵! 사진 찍기</button>
+    <div class="slider">공을 드는 높이
+      <span class="lab">낮게</span><input type="range" id="r1v" min="-1" max="1" step="0.05" value="0"><span class="lab">높게</span>
+      <button class="btn ghost" id="b1fit" style="font-size:18px;padding:8px 12px">딱 맞게</button>
+    </div>
+  </div>
+  <div class="toggles">
+    <label><input type="checkbox" id="tg1range"> 그림자가 생기는 범위 보기 (점선)</label>
+    <label><input type="checkbox" id="tg1fov" checked> 관측자가 보는 범위 보기</label>
+  </div>
+  <div class="note">💡 팔을 뻗었을 때 전등이 공에 딱 맞게 가려지도록 높이를 맞춰요. ⚠️ 실제 실험에서는 전등을 맨손으로 만지거나 오랫동안 보지 않아요.</div>
+
+  <div class="strip">
+    <h4>💡 전등을 바라보고 찍은 사진 <span>(찍은 순서대로)</span></h4>
+    <div class="shots" id="shotsFace"><span class="empty">아직 찍은 사진이 없어요.</span></div>
+    <div class="timearrow">시간 순서</div>
+  </div>
+  <div class="strip">
+    <h4>🔙 전등을 등지고 찍은 사진 <span>(찍은 순서대로)</span></h4>
+    <div class="shots" id="shotsBack"><span class="empty">아직 찍은 사진이 없어요.</span></div>
+    <div class="timearrow">시간 순서</div>
+  </div>
+  <div class="controls"><button class="btn ghost" id="b1clear">🗑 사진 모두 지우기</button></div>
+
+  <div class="sum">
+    <h2>📝 정리하기</h2>
+    <div class="qgrid" id="quiz1"></div>
+  </div>
+  </div><!-- /exp1 -->
+</section>
+
+<!-- ===================== 탭 2 : 일식 탐구 ===================== -->
+<section class="tabpanel" id="t2">
+  <div class="guide">
+    <b>일식</b>은 달이 태양을 가려 태양 전체 또는 일부가 보이지 않는 현상이에요.
+    달을 <b>삭</b> 위치로 움직여 <b>달의 그림자</b>가 지구에 닿는 모습을 보고,
+    오른쪽 지구에서 📍관측자를 옮겨 가며 <b>어디서 어떤 일식이 보이는지</b> 확인해 보세요.
+  </div>
+
+  <div class="layout wide">
+    <div class="card">
+      <h3>🛰 우주에서 본 모습 <small>(북극 위에서 내려다봄 · 크기와 거리는 실제와 달라요)</small></h3>
+      <canvas id="cv2a" style="aspect-ratio:800/500"></canvas>
+      <div class="hint">🖐 달을 끌어서 공전 궤도를 따라 움직여 보세요</div>
+      <div class="controls">
+        <button class="btn" id="b2play">▶ 공전 시작</button>
+        <button class="btn sun" id="b2go">🌑 삭 근처로 보내기</button>
+        <div class="speed">빠르기
+          <button data-sp="1.5">느리게</button><button data-sp="4" class="on">보통</button><button data-sp="10">빠르게</button>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="slider">달이 지나가는 높이
+          <span class="lab">아래</span><input type="range" id="r2v" min="-1" max="1" step="0.05" value="0"><span class="lab">위</span>
+          <button class="btn ghost" id="b2mid" style="font-size:18px;padding:8px 12px">가운데</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3>🌏 태양 쪽에서 본 지구 <small>(모두 낮인 쪽)</small></h3>
+        <canvas id="cv2b" style="aspect-ratio:420/360"></canvas>
+        <div class="hint">🖐 지구를 눌러 📍관측자를 옮겨 보세요</div>
+        <div class="legend">
+          <span><i style="background:#0a0a14"></i>진한 그림자(본그림자)</span>
+          <span><i style="background:#5b6273"></i>옅은 그림자(반그림자)</span>
+        </div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <h3>📍 관측자가 본 하늘</h3>
+        <canvas id="cv2c" style="aspect-ratio:420/280"></canvas>
+        <div class="toggles"><label><input type="checkbox" id="tg2outline" checked> 달 윤곽선 보기</label></div>
+      </div>
+    </div>
+  </div>
+  <div class="status" id="st2">달을 삭 위치로 움직여 보세요.</div>
+
+  <div class="strip">
+    <h4>🎬 일식의 진행 <span>(📍관측자 자리에서 시간 순서대로 찍어요)</span></h4>
+    <div class="controls" style="margin-top:0;margin-bottom:8px">
+      <button class="btn sun" id="b2rec">🎬 일식 진행 순서대로 찍기</button>
+      <button class="btn ghost" id="b2clear">🗑 지우기</button>
+    </div>
+    <div class="shots" id="shots2"><span class="empty">버튼을 누르면 달이 움직이며 9장을 찍어요. 📍을 그림자가 지나가는 길 위에 두세요.</span></div>
+    <div class="timearrow">일식의 진행 방향(시간 순서)</div>
+  </div>
+
+  <div class="box">
+    🔎 <b>달은 지구 주위를 시계 반대 방향으로 공전</b>하므로 지구에서 보면 달은 태양의 <b>오른쪽에서 왼쪽으로</b> 이동해요.
+    그래서 일식이 일어날 때 태양은 <b>오른쪽부터</b> 가려지기 시작해요.
+    개기일식 때는 태양의 광구가 가려져 평소에는 보기 어려운 <b>태양의 대기(코로나)</b>를 볼 수 있어요.<br>
+    ⚠️ 실제 태양은 맨눈으로 보면 안 돼요. 반드시 태양 관측용 필터를 써요.
+  </div>
+
+  <div class="sum">
+    <h2>📝 일식 확인하기</h2>
+    <div class="qgrid" id="quiz2"></div>
+  </div>
+</section>
+
+<!-- ===================== 탭 3 : 월식 탐구 ===================== -->
+<section class="tabpanel" id="t3">
+  <div class="guide">
+    <b>월식</b>은 달이 지구의 그림자 속에 들어가 달 전체 또는 일부가 보이지 않는 현상이에요.
+    달을 <b>망</b> 위치로 움직여 지구의 그림자 속으로 들어가는 모습을 관찰하고,
+    지구 위 📍관측자를 옮겨 가며 <b>어디서 월식이 보이는지</b> 확인해 보세요.
+  </div>
+
+  <div class="layout wide">
+    <div class="card">
+      <h3>🛰 우주에서 본 모습 <small>(북극 위에서 내려다봄 · 크기와 거리는 실제와 달라요)</small></h3>
+      <canvas id="cv3a" style="aspect-ratio:800/500"></canvas>
+      <div class="hint">🖐 달을 끌어 움직이고, 지구 가장자리의 📍관측자도 끌어서 옮겨 보세요</div>
+      <div class="controls">
+        <button class="btn" id="b3play">▶ 공전 시작</button>
+        <button class="btn sun" id="b3go">🌕 망 근처로 보내기</button>
+        <div class="speed">빠르기
+          <button data-sp="1.5">느리게</button><button data-sp="4" class="on">보통</button><button data-sp="10">빠르게</button>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="slider">달이 지나가는 높이
+          <span class="lab">아래</span><input type="range" id="r3v" min="-1" max="1" step="0.05" value="0"><span class="lab">위</span>
+          <button class="btn ghost" id="b3mid" style="font-size:18px;padding:8px 12px">가운데</button>
+        </div>
+      </div>
+      <div class="toggles">
+        <label><input type="checkbox" id="tg3red"> 🔴 지구 대기를 지나는 붉은 빛 보기</label>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🌙 지구(밤인 곳)에서 본 달</h3>
+      <canvas id="cv3b" style="aspect-ratio:500/400"></canvas>
+      <div class="toggles"><label><input type="checkbox" id="tg3lines" checked> 지구 그림자 경계선 보기</label></div>
+      <div class="legend">
+        <span><i style="border:2px dashed #ff9b7a"></i>진한 그림자(본그림자)</span>
+        <span><i style="border:2px dashed #8d95b8"></i>옅은 그림자(반그림자)</span>
+      </div>
+      <div class="status" id="st3pin" style="font-size:20px"></div>
+    </div>
+  </div>
+  <div class="status" id="st3">달을 망 위치로 움직여 보세요.</div>
+
+  <div class="strip">
+    <h4>🎬 월식의 진행 <span>(시간 순서대로 찍어요)</span></h4>
+    <div class="controls" style="margin-top:0;margin-bottom:8px">
+      <button class="btn sun" id="b3rec">🎬 월식 진행 순서대로 찍기</button>
+      <button class="btn ghost" id="b3clear">🗑 지우기</button>
+    </div>
+    <div class="shots" id="shots3"><span class="empty">버튼을 누르면 달이 움직이며 9장을 찍어요.</span></div>
+    <div class="timearrow">월식의 진행 방향(시간 순서)</div>
+  </div>
+
+  <div class="box">
+    🔎 개기월식이 일어날 때 달은 <b>왼쪽부터</b> 지구의 그림자 속으로 들어가요. 그래서 달은 <b>왼쪽부터</b> 가려지기 시작해요.<br>
+    🔴 <b>개기월식 때 달이 붉게 보이는 까닭</b>: 태양 빛이 지구 대기를 지나면서 꺾이고, 그중 붉은 빛이 달까지 닿기 때문이에요. 이때 달을 ‘블러드 문’이라고도 해요.<br>
+    🌏 일식은 달의 그림자가 닿는 지역에서만 볼 수 있지만, <b>월식은 지구에서 밤이 되는 모든 지역</b>에서 볼 수 있어요.
+  </div>
+
+  <div class="sum">
+    <h2>📝 월식 확인하기 · 스스로 평가하기</h2>
+    <div class="qgrid" id="quiz3"></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  이 가상실험(프로그램 코드, 디자인, 캐릭터·그림, 애니메이션, 문항과 설명 글)의 저작권은 제작자 혜민쌤에게 있으며, 허락 없이 복제·수정·배포·게시하거나 상업적으로 이용하는 것을 금지합니다.<br>
+  © 2026 혜민쌤의 가상실험실
+</footer>
+
+<script>
+"use strict";
+/* =========================================================
+   공통 도구
+   ========================================================= */
+const DEG = Math.PI/180;
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const lerp = (a,b,t) => a + (b-a)*t;
+function norm180(a){ return ((a+180)%360+360)%360-180; }
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+// 두 원이 겹친 넓이
+function overlapArea(r1, r2, d){
+  if (d >= r1 + r2) return 0;
+  if (d <= Math.abs(r1 - r2)) return Math.PI * Math.min(r1, r2) ** 2;
+  const a1 = Math.acos(clamp((d*d + r1*r1 - r2*r2)/(2*d*r1), -1, 1));
+  const a2 = Math.acos(clamp((d*d + r2*r2 - r1*r1)/(2*d*r2), -1, 1));
+  return r1*r1*a1 + r2*r2*a2 - 0.5*Math.sqrt(Math.max(0,(-d+r1+r2)*(d+r1-r2)*(d-r1+r2)*(d+r1+r2)));
+}
+
+class View {
+  constructor(id, W, H){ this.cv=$(id); this.W=W; this.H=H; this.ctx=this.cv.getContext('2d'); this.resize(); }
+  resize(){
+    const dpr = Math.min(window.devicePixelRatio||1, 2);
+    const w = this.cv.clientWidth || this.W;
+    this.cv.width = Math.round(w*dpr);
+    this.cv.height = Math.round(w*dpr*this.H/this.W);
+    this.k = this.cv.width/this.W;
+    this.ctx.setTransform(this.k,0,0,this.k,0,0);
+  }
+  pt(e){ const r=this.cv.getBoundingClientRect(); return {x:(e.clientX-r.left)*this.W/r.width, y:(e.clientY-r.top)*this.H/r.height}; }
+  // 화면 일부를 잘라 작은 사진(canvas)으로
+  snap(sx, sy, sw, sh, tw){
+    const th = Math.round(tw*sh/sw);
+    const t = document.createElement('canvas'); t.width=tw; t.height=th;
+    t.getContext('2d').drawImage(this.cv, sx*this.k, sy*this.k, sw*this.k, sh*this.k, 0, 0, tw, th);
+    return t;
+  }
+}
+function drag(view, onDown, onMove, onUp){
+  let down=false;
+  view.cv.addEventListener('pointerdown', e=>{ const p=view.pt(e); if(onDown(p)!==false){ down=true; view.cv.setPointerCapture(e.pointerId); } });
+  view.cv.addEventListener('pointermove', e=>{ if(down) onMove(view.pt(e)); });
+  const end = ()=>{ if(down){ down=false; onUp && onUp(); } };
+  view.cv.addEventListener('pointerup', end);
+  view.cv.addEventListener('pointercancel', end);
+}
+function makeStars(n, W, H, seed){ const r=mulberry32(seed), a=[]; for(let i=0;i<n;i++) a.push([r()*W, r()*H, r()*1.4+0.3, r()*0.6+0.3]); return a; }
+function drawStars(c, stars, alpha=1){ for(const s of stars){ c.globalAlpha=s[3]*alpha; c.fillStyle='#fff'; c.beginPath(); c.arc(s[0],s[1],s[2],0,7); c.fill(); } c.globalAlpha=1; }
+function label(c, txt, x, y, opt={}){
+  c.font = `${opt.bold===false?400:700} ${opt.size||18}px "Noto Sans KR", sans-serif`;
+  c.textAlign = opt.align||'center'; c.textBaseline='middle';
+  if (opt.bg!==false){
+    const w = c.measureText(txt).width + 14, h=(opt.size||18)+10;
+    const x0 = opt.align==='left'? x-4 : opt.align==='right'? x-w+4 : x-w/2;
+    c.fillStyle = opt.bg||'rgba(5,8,30,.75)';
+    roundRect(c, x0, y-h/2, w, h, 8); c.fill();
+  }
+  c.fillStyle = opt.color||'#fff'; c.fillText(txt, x, y+1);
+}
+function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
+function arrowHead(c, x, y, ang, size, color){
+  c.save(); c.translate(x,y); c.rotate(ang); c.fillStyle=color; c.beginPath(); c.moveTo(size,0); c.lineTo(-size*0.7, size*0.65); c.lineTo(-size*0.7,-size*0.65); c.closePath(); c.fill(); c.restore();
+}
+// 궤도 위 화살표 (수학 각도, 시계 반대 방향)
+function orbitArrow(c, cx, cy, R, a0, a1, color){
+  c.strokeStyle=color; c.lineWidth=4; c.setLineDash([]);
+  c.beginPath(); c.arc(cx, cy, R, -a0*DEG, -a1*DEG, true); c.stroke();
+  const x = cx + R*Math.cos(a1*DEG), y = cy - R*Math.sin(a1*DEG);
+  const tang = Math.atan2(-Math.cos(a1*DEG), -Math.sin(a1*DEG)); // 반시계 접선
+  arrowHead(c, x, y, tang, 11, color);
+}
+// 달 표면 무늬 (흑백 값 배열)
+function makeMoonTex(N){
+  const cv=document.createElement('canvas'); cv.width=cv.height=N; const x=cv.getContext('2d'); const rnd=mulberry32(11);
+  x.fillStyle='#c4c3bd'; x.fillRect(0,0,N,N);
+  for(let i=0;i<10;i++){ const cx=N*(0.22+rnd()*0.56), cy=N*(0.18+rnd()*0.6), r=N*(0.07+rnd()*0.14);
+    const g=x.createRadialGradient(cx,cy,0,cx,cy,r); g.addColorStop(0,'rgba(85,85,88,.6)'); g.addColorStop(1,'rgba(85,85,88,0)');
+    x.fillStyle=g; x.beginPath(); x.arc(cx,cy,r,0,7); x.fill(); }
+  for(let i=0;i<45;i++){ const cx=rnd()*N, cy=rnd()*N, r=N*(0.008+rnd()*0.03);
+    x.fillStyle='rgba(60,60,60,.25)'; x.beginPath(); x.arc(cx,cy,r,0,7); x.fill();
+    x.strokeStyle='rgba(255,255,255,.25)'; x.lineWidth=1; x.beginPath(); x.arc(cx-0.6,cy-0.6,r,0,7); x.stroke(); }
+  const d=x.getImageData(0,0,N,N).data, g=new Float32Array(N*N);
+  for(let j=0;j<N;j++) for(let i=0;i<N;i++){ const dx=(i+.5)/N*2-1, dy=(j+.5)/N*2-1, rr=dx*dx+dy*dy;
+    g[j*N+i] = rr<1 ? (d[(j*N+i)*4]/255)*(0.72+0.28*Math.sqrt(1-rr)) : 0; }
+  return g;
+}
+
+/* =========================================================
+   탭 전환
+   ========================================================= */
+let active = 't1';
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click', ()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active', x===b));
+  document.querySelectorAll('.tabpanel').forEach(p=>p.classList.toggle('active', p.id===b.dataset.tab));
+  active = b.dataset.tab; resizeAll();
+}));
+
+/* =========================================================
+   문제 카드
+   ========================================================= */
+function makeQuiz(elId, items){
+  const el=$(elId);
+  items.forEach(q=>{
+    const d=document.createElement('div'); d.className='q';
+    d.innerHTML = `<div class="qt">${q.q}${q.sub?`<em>${q.sub}</em>`:''}</div><div class="opts"></div><div class="fb"></div>`;
+    const opts=d.querySelector('.opts'), fb=d.querySelector('.fb');
+    q.o.forEach((t,i)=>{
+      const b=document.createElement('button'); b.textContent=t;
+      b.onclick=()=>{
+        opts.querySelectorAll('button').forEach(x=>x.classList.remove('ok','no'));
+        const right = i===q.a;
+        b.classList.add(right?'ok':'no');
+        fb.className='fb '+(right?'ok':'no');
+        fb.textContent = right ? '⭕ 정답! '+q.ok : '❌ 다시 생각해 보세요. '+(q.no||'');
+        if (right && q.onOk) q.onOk();
+      };
+      opts.appendChild(b);
+    });
+    el.appendChild(d);
+  });
+}
+
+/* =========================================================
+   탭 1 : 모형 실험 (전등·공·관측자)
+   ========================================================= */
+const A1 = {W:800, H:500, LAMP:{x:115,y:250}, OBS:{x:560,y:250}, R:150, BR:15, HEAD:17};
+const O1 = {W:800, H:450, cx:400, cy:210, F:480, L:37, B:40, SH:72, VY:90};
+const ARM = 40; // 팔을 움직일 수 있는 범위(도)
+const T1 = {theta:180, target:180, alpha:-ARM, v:0, auto:false, shots:{face:[], back:[]}, wrong:0, warnUntil:0};
+const V1a = new View('cv1a', A1.W, A1.H);
+const V1b = new View('cv1b', O1.W, O1.H);
+const stars1 = makeStars(0,1,1,1);
+const T1mode = ()=> T1.target===180 ? 'face' : 'back';
+const rotating = ()=> Math.abs(norm180(T1.theta - T1.target)) > 0.01;
+
+const scr = a => [Math.cos(a*DEG), -Math.sin(a*DEG)];   // 수학 각도 → 화면 방향
+function ballPos1(){ const [dx,dy]=scr(T1.theta+T1.alpha); return {x:A1.OBS.x+dx*A1.R, y:A1.OBS.y+dy*A1.R}; }
+
+// 관측자 눈에 보이는 것 계산
+function obs1(){
+  const r = {};
+  r.beta = norm180(180 - T1.theta);                 // 전등의 상대 방향(+ 왼쪽)
+  r.bx = O1.cx - O1.F*Math.tan(T1.alpha*DEG);
+  r.by = O1.cy - T1.v*O1.VY;
+  r.lampVis = Math.abs(r.beta) < 72;
+  if (r.lampVis){ r.lx = O1.cx - O1.F*Math.tan(r.beta*DEG); r.ly = O1.cy;
+    r.cover = overlapArea(O1.L, O1.B, Math.hypot(r.lx-r.bx, r.ly-r.by))/(Math.PI*O1.L*O1.L); }
+  else r.cover = 0;
+  const gam = norm180(r.beta + 180);                // 머리 그림자의 방향
+  r.shVis = Math.abs(gam) < 72;
+  if (r.shVis){ r.sx = O1.cx - O1.F*Math.tan(gam*DEG); r.sy = O1.cy;
+    r.shFrac = overlapArea(O1.SH, O1.B, Math.hypot(r.sx-r.bx, r.sy-r.by))/(Math.PI*O1.B*O1.B); }
+  else r.shFrac = 0;
+  // 공에서 본 전등 방향과 관측자 방향 사이의 각 → 보이는 밝은 부분의 모양
+  const b=ballPos1(), v1=[A1.LAMP.x-b.x, A1.LAMP.y-b.y], v2=[A1.OBS.x-b.x, A1.OBS.y-b.y];
+  r.phaseK = (v1[0]*v2[0]+v1[1]*v2[1])/(Math.hypot(...v1)*Math.hypot(...v2));   // 1: 다 밝음, -1: 다 어두움
+  const [lx_,ly_]=scr(T1.theta+90);
+  r.litLeft = (v1[0]*lx_+v1[1]*ly_) >= 0;
+  return r;
+}
+
+// 전등(점광원)에서 원에 접하는 두 선으로 만든 그림자 (물체 크기에서 시작해 멀어질수록 넓어짐)
+function coneCircle(L, C, r, far){
+  const dx=C.x-L.x, dy=C.y-L.y, d=Math.hypot(dx,dy), ux=dx/d, uy=dy/d, nx=-uy, ny=ux;
+  const s=Math.min(0.999, r/d), co=Math.sqrt(1-s*s);
+  const T=[[C.x-r*s*ux+r*co*nx, C.y-r*s*uy+r*co*ny],[C.x-r*s*ux-r*co*nx, C.y-r*s*uy-r*co*ny]];
+  const ext=t=>{ const ex=t[0]-L.x, ey=t[1]-L.y, l=Math.hypot(ex,ey); return [t[0]+ex/l*far, t[1]+ey/l*far]; };
+  return [T[0], ext(T[0]), ext(T[1]), T[1]];
+}
+const shCv = document.createElement('canvas'), shCv2 = document.createElement('canvas');
+function pathPoly(c, P){ c.beginPath(); c.moveTo(P[0][0],P[0][1]); for(let i=1;i<P.length;i++) c.lineTo(P[i][0],P[i][1]); c.closePath(); }
+
+function drawT1a(){
+  const c=V1a.ctx, {LAMP,OBS,R,BR,HEAD}=A1, th=T1.theta, ball=ballPos1();
+  // 바닥
+  c.fillStyle='#121735'; c.fillRect(0,0,A1.W,A1.H);
+  c.strokeStyle='rgba(255,255,255,.04)'; c.lineWidth=1;
+  for(let x=0;x<=A1.W;x+=50){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,A1.H); c.stroke(); }
+  for(let y=0;y<=A1.H;y+=50){ c.beginPath(); c.moveTo(0,y); c.lineTo(A1.W,y); c.stroke(); }
+  // 전등 빛
+  let g=c.createRadialGradient(LAMP.x,LAMP.y,0,LAMP.x,LAMP.y,620);
+  g.addColorStop(0,'rgba(255,232,150,.42)'); g.addColorStop(.35,'rgba(255,225,140,.16)'); g.addColorStop(1,'rgba(255,220,140,0)');
+  c.fillStyle=g; c.fillRect(0,0,A1.W,A1.H);
+  // ----- 그림자 (눈높이에서 전등 빛이 가려지는 곳) -----
+  const [fx,fy]=scr(th), [px,py]=scr(th+90), [bx,by]=scr(th+T1.alpha);
+  const hand={x:OBS.x+bx*95, y:OBS.y+by*95};
+  const FAR=1000;
+  // 진한 그림자: 공 높이(눈높이)에 있는 머리와 공의 그림자 → 공을 가리는 그림자
+  const headPoly = coneCircle(LAMP, OBS, HEAD, FAR);
+  const ballPoly = coneCircle(LAMP, ball, BR, FAR);
+  // 옅은 그림자: 공보다 낮은 어깨·팔·막대의 그림자 (공은 가리지 않음)
+  const bodyPolys = [];
+  for(let t=-1;t<=1.001;t+=0.25) bodyPolys.push(coneCircle(LAMP,{x:OBS.x+px*26*t-fx*3, y:OBS.y+py*26*t-fy*3},11,FAR));
+  for(const s of [1,-1]){ const sx=OBS.x+px*22*s+fx*4, sy=OBS.y+py*22*s+fy*4;
+    for(let t=0;t<=1.001;t+=0.2) bodyPolys.push(coneCircle(LAMP,{x:lerp(sx,hand.x,t), y:lerp(sy,hand.y,t)},4.5,FAR)); }
+  for(let t=0;t<=1.001;t+=0.25) bodyPolys.push(coneCircle(LAMP,{x:lerp(hand.x,ball.x,t), y:lerp(hand.y,ball.y,t)},2,FAR));
+  // 겹친 곳이 더 진해지지 않도록 따로 그린 뒤 한 번씩만 얹기
+  for(const cv of [shCv, shCv2]) if (cv.width!==V1a.cv.width || cv.height!==V1a.cv.height){ cv.width=V1a.cv.width; cv.height=V1a.cv.height; }
+  const se=shCv.getContext('2d'), sb=shCv2.getContext('2d');
+  for(const x of [se,sb]){ x.setTransform(V1a.k,0,0,V1a.k,0,0); x.globalCompositeOperation='source-over'; x.clearRect(0,0,A1.W,A1.H); x.fillStyle='#000'; }
+  pathPoly(se,headPoly); se.fill(); pathPoly(se,ballPoly); se.fill();
+  for(const P of bodyPolys){ pathPoly(sb,P); sb.fill(); }
+  sb.globalCompositeOperation='destination-out'; sb.drawImage(shCv,0,0,A1.W,A1.H); sb.globalCompositeOperation='source-over';
+  c.globalAlpha=.22; c.drawImage(shCv2,0,0,A1.W,A1.H);
+  c.globalAlpha=.6; c.drawImage(shCv,0,0,A1.W,A1.H); c.globalAlpha=1;
+  if ($('tg1range').checked){
+    c.setLineDash([8,6]); c.lineWidth=2;
+    c.strokeStyle='rgba(255,155,122,.95)'; pathPoly(c, headPoly); c.stroke();
+    c.strokeStyle='rgba(190,200,240,.95)'; pathPoly(c, ballPoly); c.stroke(); c.setLineDash([]);
+  }
+  // 보는 범위
+  if ($('tg1fov').checked){
+    c.fillStyle='rgba(79,195,247,.08)'; c.strokeStyle='rgba(79,195,247,.45)'; c.lineWidth=2; c.setLineDash([6,6]);
+    c.beginPath(); c.moveTo(OBS.x,OBS.y); c.arc(OBS.x,OBS.y,420,-(th+40)*DEG,-(th-40)*DEG); c.closePath(); c.fill(); c.stroke(); c.setLineDash([]);
+  }
+  // 오른쪽 → 왼쪽 안내 화살표
+  c.globalAlpha=.85; orbitArrow(c, OBS.x, OBS.y, R+32, th-ARM, th+ARM, '#ffd23f'); c.globalAlpha=1;
+  const [rx,ry]=scr(th-ARM-8), [lx2,ly2]=scr(th+ARM+8);
+  label(c,'오른쪽', OBS.x+rx*(R+34), OBS.y+ry*(R+34), {size:16,color:'#ffd23f'});
+  label(c,'왼쪽', OBS.x+lx2*(R+34), OBS.y+ly2*(R+34), {size:16,color:'#ffd23f'});
+  label(c,'↺ 노란 화살표: 시계 반대 방향 = 달의 공전 방향', 10, A1.H-44, {size:14,align:'left',color:'#ffd23f'});
+  // 의자
+  c.strokeStyle='#5d6276'; c.lineWidth=5;
+  for(let i=0;i<5;i++){ const [dx,dy]=scr(th+90+i*72); c.beginPath(); c.moveTo(OBS.x,OBS.y); c.lineTo(OBS.x+dx*40,OBS.y+dy*40); c.stroke();
+    c.fillStyle='#2b2e3a'; c.beginPath(); c.arc(OBS.x+dx*40,OBS.y+dy*40,5,0,7); c.fill(); }
+  c.fillStyle='#3a3e50'; c.beginPath(); c.arc(OBS.x,OBS.y,28,0,7); c.fill();
+  // 몸, 팔, 막대
+  c.save(); c.translate(OBS.x-fx*3, OBS.y-fy*3); c.rotate(Math.atan2(py,px));
+  c.fillStyle='#e8786a'; c.beginPath(); c.ellipse(0,0,31,14,0,0,7); c.fill(); c.restore();
+  c.strokeStyle='#f1c7a3'; c.lineWidth=9; c.lineCap='round';
+  for(const s of [1,-1]){ c.beginPath(); c.moveTo(OBS.x+px*24*s+fx*4, OBS.y+py*24*s+fy*4); c.lineTo(hand.x,hand.y); c.stroke(); }
+  c.strokeStyle='#c49a6c'; c.lineWidth=4; c.beginPath(); c.moveTo(hand.x,hand.y); c.lineTo(ball.x,ball.y); c.stroke(); c.lineCap='butt';
+  c.fillStyle='#f1c7a3'; c.beginPath(); c.arc(hand.x,hand.y,7,0,7); c.fill();
+  // 머리
+  c.fillStyle='#f1c7a3'; c.beginPath(); c.arc(OBS.x+fx*9,OBS.y+fy*9,6,0,7); c.fill();
+  c.fillStyle='#3b2a20'; c.beginPath(); c.arc(OBS.x,OBS.y,HEAD,0,7); c.fill();
+  // 공의 그림자가 관측자 얼굴에 닿으면 얼굴도 어둡게
+  c.save(); c.beginPath(); c.arc(OBS.x,OBS.y,HEAD+10,0,7); c.clip();
+  c.fillStyle='rgba(0,0,10,.6)'; pathPoly(c, ballPoly); c.fill(); c.restore();
+  // 공 : 전등 쪽 반만 밝음
+  const la=Math.atan2(LAMP.y-ball.y, LAMP.x-ball.x);
+  c.fillStyle='#3c3f4c'; c.beginPath(); c.arc(ball.x,ball.y,BR,0,7); c.fill();
+  c.fillStyle='#f2f1ec'; c.beginPath(); c.arc(ball.x,ball.y,BR,la-Math.PI/2,la+Math.PI/2); c.closePath(); c.fill();
+  // 공이 관측자의 그림자 속에 들어가면 밝은 쪽도 어둡게
+  c.save(); c.beginPath(); c.arc(ball.x,ball.y,BR,0,7); c.clip();
+  c.fillStyle='rgba(0,0,10,.8)'; pathPoly(c,headPoly); c.fill(); c.restore();
+  if ($('tg1range').checked){
+    const [hx2,hy2]=scr(th+180);
+    label(c,'관측자 머리의 그림자', OBS.x-hx2*250, OBS.y-hy2*250+ (th===0?-46:46), {size:15,color:'#ffb59a'});
+  }
+  // 전등
+  c.fillStyle='#5a4632'; c.beginPath(); c.arc(LAMP.x,LAMP.y,30,0,7); c.fill();
+  g=c.createRadialGradient(LAMP.x,LAMP.y,0,LAMP.x,LAMP.y,46); g.addColorStop(0,'rgba(255,250,220,1)'); g.addColorStop(.35,'rgba(255,236,160,.95)'); g.addColorStop(1,'rgba(255,220,120,0)');
+  c.fillStyle=g; c.beginPath(); c.arc(LAMP.x,LAMP.y,46,0,7); c.fill();
+  // 이름표
+  label(c,'💡 전등', LAMP.x, LAMP.y+62);
+  label(c,'※ 진한 그림자: 공 높이(눈높이)의 그림자 · 옅은 그림자: 공보다 낮은 어깨·팔의 그림자', 10, A1.H-16, {size:13,align:'left',color:'#cfd6ff'});
+  label(c,'관측자', OBS.x+ (fx>0?-70:70), OBS.y+52, {size:17});
+  label(c,'공', ball.x + (by>0?0:0), ball.y + (ball.y>OBS.y?30:-30), {size:16});
+  const o=obs1();
+  if (!rotating()){
+    if (T1mode()==='face' && o.cover>0) label(c, o.cover>=0.999?'공의 그림자가 관측자의 눈을 완전히 덮었어요':'공의 그림자가 관측자의 눈에 닿기 시작했어요', 400, 28, {size:18,color:'#ffd23f'});
+    if (T1mode()==='back' && o.shFrac>0) label(c, '공이 관측자의 그림자 속으로 들어가고 있어요', 400, 28, {size:18,color:'#ffb59a'});
+  }
+}
+
+function drawLitBall(c, x, y, r, k, litLeft){
+  const LIT='#f1f0ea', DARK='#252834';
+  c.fillStyle=DARK; c.beginPath(); c.arc(x,y,r,0,7); c.fill();
+  c.save(); c.translate(x,y); if(!litLeft) c.scale(-1,1);
+  c.fillStyle=LIT; c.beginPath(); c.arc(0,0,r,Math.PI/2,Math.PI*1.5); c.closePath(); c.fill();
+  c.fillStyle = k>0 ? LIT : DARK; c.beginPath(); c.ellipse(0,0,Math.max(0.01,r*Math.abs(k)),r,0,0,7); c.fill();
+  c.restore();
+  const g=c.createRadialGradient(x-r*.35,y-r*.35,r*.2,x,y,r); g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(1,'rgba(0,0,10,.28)');
+  c.fillStyle=g; c.beginPath(); c.arc(x,y,r,0,7); c.fill();
+  c.strokeStyle='rgba(255,255,255,.18)'; c.lineWidth=1.5; c.stroke();
+}
+function drawT1b(clean){
+  const c=V1b.ctx, o=obs1(), W=O1.W, H=O1.H;
+  const wall = clamp(-Math.cos(o.beta*DEG), 0, 1);   // 전등이 뒤에 있으면 앞 벽이 밝음
+  const mix=(a,b,t)=>`rgb(${a.map((v,i)=>Math.round(lerp(v,b[i],t))).join(',')})`;
+  let g=c.createLinearGradient(0,0,0,330);
+  g.addColorStop(0, mix([10,12,26],[60,64,86],wall*.75)); g.addColorStop(1, mix([16,18,34],[78,82,104],wall*.75));
+  c.fillStyle=g; c.fillRect(0,0,W,330);
+  c.fillStyle=mix([8,9,20],[44,47,64],wall*.7); c.fillRect(0,330,W,H-330);
+  c.fillStyle=mix([20,22,40],[90,94,116],wall*.6); c.fillRect(0,326,W,5);
+  // 전등이 가려지면 교실이 어두워짐
+  if (o.lampVis){ c.fillStyle=`rgba(0,0,0,${0.5*o.cover})`; c.fillRect(0,0,W,H); }
+  // 전등과 받침
+  if (o.lampVis){
+    const lx=o.lx, ly=o.ly;
+    c.strokeStyle='#2a2a30'; c.lineWidth=6; c.beginPath(); c.moveTo(lx,ly+O1.L); c.lineTo(lx,300); c.stroke();
+    c.fillStyle='#3a2e24'; c.fillRect(lx-46,300,92,10);
+    c.strokeStyle='#3a2e24'; c.lineWidth=6; c.beginPath(); c.moveTo(lx-38,308); c.lineTo(lx-50,400); c.moveTo(lx+38,308); c.lineTo(lx+50,400); c.stroke();
+    const glowA = 1 - 0.45*o.cover;
+    g=c.createRadialGradient(lx,ly,O1.L*0.8,lx,ly,190);
+    g.addColorStop(0,`rgba(255,240,180,${0.85*glowA})`); g.addColorStop(.25,`rgba(255,226,140,${0.35*glowA})`); g.addColorStop(1,'rgba(255,220,120,0)');
+    c.fillStyle=g; c.beginPath(); c.arc(lx,ly,190,0,7); c.fill();
+    g=c.createRadialGradient(lx-8,ly-8,2,lx,ly,O1.L);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.7,'#fff6d0'); g.addColorStop(1,'#ffe48a');
+    c.fillStyle=g; c.beginPath(); c.arc(lx,ly,O1.L,0,7); c.fill();
+  }
+  // 그림자 범위 표시
+  if (!clean && o.shVis && $('tg1range').checked){
+    c.setLineDash([10,8]); c.strokeStyle='rgba(255,155,122,.9)'; c.lineWidth=3;
+    c.beginPath(); c.arc(o.sx,o.sy,O1.SH,0,7); c.stroke(); c.setLineDash([]);
+    label(c,'내 머리의 그림자', o.sx, o.sy-O1.SH-16, {size:16,color:'#ffb59a'});
+  }
+  // 팔 (아래쪽에서 앞으로 뻗음) → 손 → 막대 → 공 (막대는 공 가운데에 꽂힘)
+  const hx = o.bx, hy = H-26;
+  c.lineCap='round';
+  for(const s of [-1,1]){
+    c.strokeStyle='#e9c09c'; c.lineWidth=24; c.beginPath(); c.moveTo(hx+s*6, hy+8); c.lineTo(hx+s*34, H+40); c.stroke();
+  }
+  c.strokeStyle='#8a6a48'; c.lineWidth=8; c.beginPath(); c.moveTo(hx,hy+10); c.lineTo(o.bx,o.by); c.stroke();
+  c.lineCap='butt';
+  // 공 : 전등 빛을 받는 반쪽만 밝음 (보는 방향에 따라 모양이 달라짐)
+  drawLitBall(c, o.bx, o.by, O1.B, o.phaseK, o.litLeft);
+  if (o.shVis && o.shFrac>0){
+    c.save(); c.beginPath(); c.arc(o.bx,o.by,O1.B,0,7); c.clip();
+    g=c.createRadialGradient(o.sx,o.sy,0,o.sx,o.sy,O1.SH+5);
+    g.addColorStop(0,'rgba(8,10,22,.9)'); g.addColorStop((O1.SH-5)/(O1.SH+5),'rgba(8,10,22,.9)'); g.addColorStop(1,'rgba(8,10,22,0)');
+    c.fillStyle=g; c.fillRect(0,0,W,H); c.restore();
+  }
+  // 막대를 쥔 두 손
+  c.fillStyle='#f1c7a3'; c.strokeStyle='rgba(120,80,60,.5)'; c.lineWidth=2;
+  c.beginPath(); c.arc(hx,hy-6,17,0,7); c.fill(); c.stroke();
+  c.beginPath(); c.arc(hx,hy+20,17,0,7); c.fill(); c.stroke();
+  if (!clean){
+    if (rotating()) label(c,'🔄 의자를 돌리는 중…', 400, 30, {size:20});
+    else label(c, T1mode()==='face'?'💡 전등을 바라보고 있어요':'🔙 전등을 등지고 있어요 (전등은 내 뒤에)', 400, 30, {size:18,color:'#cfe8ff'});
+  }
+}
+
+function update1(dt){
+  if (rotating()){
+    const d = norm180(T1.target - T1.theta), step = 200*dt;
+    T1.theta = Math.abs(d) <= step ? T1.target : T1.theta + Math.sign(d)*step;
+    T1.theta = norm180(T1.theta);
+  } else if (T1.auto){
+    T1.alpha += 9*dt;
+    if (T1.alpha >= ARM){ T1.alpha = ARM; T1.auto=false; $('b1auto').classList.remove('on'); }
+  }
+  const o=obs1();
+  const face = T1mode()==='face';
+  $('m1lab').textContent = face ? '전등이 가려진 정도' : '공이 그림자에 가려진 정도';
+  const val = face ? o.cover : o.shFrac;
+  $('m1fill').style.width = (val*100).toFixed(0)+'%';
+  $('m1val').textContent = Math.round(val*100)+'%';
+  const st=$('st1'); let t, cls='';
+  if (rotating()){ t='🔄 회전의자를 돌리고 있어요…'; }
+  else if (face){
+    if (o.cover>=0.999){ t='💡 전등이 공에 완전히 가려졌어요! 공 둘레로 빛이 살짝 보여요.'; cls='total'; }
+    else if (o.cover>0){ t='전등의 일부가 공에 가려졌어요. 전등의 어느 쪽부터 가려지나요?'; cls='part'; }
+    else t = T1.alpha<0 ? '공이 오른쪽에 있어요. 왼쪽으로 움직여 전등을 가려 보세요.' : '공이 전등을 지나 왼쪽으로 갔어요.';
+  } else {
+    if (o.shFrac>=0.999){ t='⚫ 공 전체가 내 그림자 속에 들어가 어둡게 보여요!'; cls='total'; }
+    else if (o.shFrac>0){ t='공의 일부가 내 그림자 속에 들어갔어요. 공의 어느 쪽부터 가려지나요?'; cls='part'; }
+    else t = T1.alpha<0 ? '공이 오른쪽에 있어요. 왼쪽으로 움직여 내 그림자 속에 넣어 보세요.' : '공이 그림자를 빠져나와 다시 밝아졌어요.';
+  }
+  if (!rotating() && performance.now() < T1.warnUntil){
+    t='⚠️ 반대 방향이에요! 달은 시계 반대 방향으로 공전하니까, 공도 오른쪽 → 왼쪽으로 움직여요.'; cls='warn';
+  }
+  st.textContent=t; st.className='status '+cls;
+}
+
+drag(V1a, p=>{ if(rotating()) return false; T1.auto=false; $('b1auto').classList.remove('on'); setAlphaFromTop(p); },
+          p=>setAlphaFromTop(p));
+function setAlpha1(a){
+  const d = a - T1.alpha;
+  if (d < 0) T1.wrong += d; else if (d > 0.3) T1.wrong = 0;
+  if (T1.wrong < -5){ T1.warnUntil = performance.now() + 2600; T1.wrong = 0; }
+  T1.alpha = a;
+}
+function setAlphaFromTop(p){
+  const a = Math.atan2(-(p.y-A1.OBS.y), p.x-A1.OBS.x)/DEG;
+  setAlpha1(clamp(norm180(a - T1.theta), -ARM, ARM));
+}
+drag(V1b, p=>{ if(rotating()) return false; T1.auto=false; $('b1auto').classList.remove('on'); setAlphaFromView(p); },
+          p=>setAlphaFromView(p));
+function setAlphaFromView(p){ setAlpha1(clamp(-Math.atan((p.x-O1.cx)/O1.F)/DEG, -ARM, ARM)); }
+
+function setSeat(face){
+  T1.target = face ? 180 : 0; T1.alpha = -ARM; T1.auto=false;
+  $('b1auto').classList.remove('on');
+  $('seatFace').classList.toggle('on', face); $('seatBack').classList.toggle('on', !face);
+}
+$('seatFace').onclick=()=>setSeat(true);
+$('seatBack').onclick=()=>setSeat(false);
+$('b1auto').onclick=()=>{ if(rotating()) return; if (T1.alpha>=ARM-0.5) T1.alpha=-ARM; T1.auto=!T1.auto; $('b1auto').classList.toggle('on',T1.auto); };
+$('b1reset').onclick=()=>{ T1.alpha=-ARM; T1.auto=false; $('b1auto').classList.remove('on'); };
+$('r1v').oninput=e=>{ T1.v=+e.target.value; };
+$('b1fit').onclick=()=>{ T1.v=0; $('r1v').value=0; };
+$('b1shot').onclick=()=>{
+  if (rotating()) return;
+  drawT1b(true);
+  const t=V1b.snap(0,0,O1.W,O1.H,300);
+  const mode=T1mode(), list=T1.shots[mode];
+  if (list.length>=8) list.shift();
+  list.push(t); renderShots(mode==='face'?'shotsFace':'shotsBack', list, false);
+};
+$('b1clear').onclick=()=>{ T1.shots.face=[]; T1.shots.back=[]; renderShots('shotsFace',[],false); renderShots('shotsBack',[],false); };
+function renderShots(id, list, sq, emptyText){
+  const el=$(id); el.innerHTML='';
+  if (!list.length){ el.innerHTML=`<span class="empty">${emptyText||'아직 찍은 사진이 없어요.'}</span>`; return; }
+  list.forEach((cv,i)=>{ const d=document.createElement('div'); d.className='shot'+(sq?' sq':''); d.appendChild(cv); const n=document.createElement('i'); n.textContent=i+1; d.appendChild(n); el.appendChild(d); });
+}
+
+makeQuiz('quiz1', [
+  {q:'공을 오른쪽에서 왼쪽으로(위에서 볼 때 시계 반대 방향으로) 움직인 까닭은?', o:['달이 지구 주위를 시계 반대 방향으로 공전하기 때문','팔을 움직이기 편해서','전등이 왼쪽에 있어서'], a:0, ok:'공은 달이고, 달은 지구 주위를 시계 반대 방향으로 공전해요. 그래서 지구(관측자)에서 보면 오른쪽 → 왼쪽으로 움직여요.', no:'공이 무엇을 나타내는지 떠올려 보세요.'},
+  {q:'전등은 무엇을 나타낼까요?', o:['태양','달','지구'], a:0, ok:'전등은 스스로 빛을 내는 태양이에요.', no:'스스로 빛을 내는 천체는 무엇일까요?'},
+  {q:'스타이로폼 공은 무엇을 나타낼까요?', o:['태양','달','지구'], a:1, ok:'관측자 주위를 도는 공은 지구 주위를 공전하는 달이에요.', no:'관측자(지구) 주위를 도는 천체예요.'},
+  {q:'관측자는 무엇을 나타낼까요?', o:['태양','달','지구'], a:2, ok:'관측자는 우리가 사는 지구예요.', no:'우리가 서 있는 곳은 어디일까요?'},
+  {q:'전등이 공에 가려질 때 위치 순서는?', sub:'(전등을 바라보고 앉았을 때)', o:['전등 – 공 – 관측자','전등 – 관측자 – 공'], a:0, ok:'공이 전등과 관측자 사이에 있어요. (태양 – 달 – 지구)', no:'공이 무엇을 가렸는지 떠올려 보세요.'},
+  {q:'전등은 어느 쪽부터 가려지나요?', sub:'(공을 오른쪽 → 왼쪽으로 움직일 때)', o:['왼쪽','오른쪽'], a:1, ok:'오른쪽에서 오던 공이 전등의 오른쪽부터 가려요.', no:'사진을 처음부터 순서대로 다시 보세요.'},
+  {q:'공이 그림자 속으로 들어갈 때 위치 순서는?', sub:'(전등을 등지고 앉았을 때)', o:['전등 – 공 – 관측자','전등 – 관측자 – 공'], a:1, ok:'관측자가 전등과 공 사이에 있어요. (태양 – 지구 – 달)', no:'공이 누구의 그림자 속으로 들어갔나요?'},
+  {q:'공은 어느 쪽부터 가려지나요?', sub:'(공을 오른쪽 → 왼쪽으로 움직일 때)', o:['왼쪽','오른쪽'], a:0, ok:'왼쪽으로 움직이는 공은 왼쪽부터 그림자 속에 들어가요.', no:'공의 앞쪽(움직이는 쪽)이 먼저 그림자에 닿아요.'},
+]);
+
+/* ---------- 0단계: 복습 ---------- */
+const VR1 = new View('cvR1', 500, 400), VR2 = new View('cvR2', 500, 400);
+const TR = {phi:200, clock:0, sweep:-40, pause:0, ans1:false, ans2:false, done:false};
+const starsR = makeStars(90, 500, 400, 31);
+function drawR1(dt){
+  const c=VR1.ctx, E={x:260,y:212,r:52}, R=140;
+  TR.phi = (TR.phi + 20*dt) % 360; TR.clock = (TR.clock + 40*dt) % 360;
+  c.fillStyle='#060920'; c.fillRect(0,0,500,400); drawStars(c, starsR, .8);
+  drawSunGlowLeft(c, 500, 400);
+  c.setLineDash([6,8]); c.strokeStyle='rgba(185,192,234,.5)'; c.lineWidth=2; c.beginPath(); c.arc(E.x,E.y,R,0,7); c.stroke(); c.setLineDash([]);
+  if (TR.ans1){ orbitArrow(c,E.x,E.y,R+18,50,110,'#ffd23f'); orbitArrow(c,E.x,E.y,R+18,230,290,'#ffd23f');
+    label(c,'↺ 시계 반대 방향', 400, 372, {size:18,color:'#ffd23f'}); }
+  drawEarthTop(c, E);
+  label(c,'북극', E.x, E.y-14, {size:13,bg:false,color:'#fff'});
+  const [mx,my]=scr(TR.phi); drawMoonTop(c,{x:E.x+mx*R,y:E.y+my*R},14);
+  label(c,'달', E.x+mx*R, E.y+my*R-26, {size:15});
+  // 비교용 시계
+  const C={x:440,y:62,r:32};
+  c.fillStyle='#f4f4f4'; c.beginPath(); c.arc(C.x,C.y,C.r,0,7); c.fill(); c.strokeStyle='#888'; c.lineWidth=3; c.stroke();
+  c.strokeStyle='#333'; c.lineWidth=2;
+  for(let i=0;i<12;i++){ const a=i*30*DEG; c.beginPath(); c.moveTo(C.x+Math.sin(a)*(C.r-4),C.y-Math.cos(a)*(C.r-4)); c.lineTo(C.x+Math.sin(a)*(C.r-9),C.y-Math.cos(a)*(C.r-9)); c.stroke(); }
+  const ha=TR.clock*DEG; c.strokeStyle='#e33'; c.lineWidth=3; c.beginPath(); c.moveTo(C.x,C.y); c.lineTo(C.x+Math.sin(ha)*(C.r-8), C.y-Math.cos(ha)*(C.r-8)); c.stroke();
+  c.fillStyle='#333'; c.beginPath(); c.arc(C.x,C.y,3,0,7); c.fill();
+  label(c,'↻ 시계 방향', C.x, C.y+C.r+16, {size:14});
+}
+function drawR2(dt){
+  const c=VR2.ctx, LAMP={x:60,y:200}, OBS={x:330,y:200}, R=120, th=180;
+  if (TR.pause>0){ TR.pause-=dt; if(TR.pause<=0) TR.sweep=-40; }
+  else { TR.sweep += 16*dt; if (TR.sweep>=40){ TR.sweep=40; TR.pause=0.9; } }
+  c.fillStyle='#121735'; c.fillRect(0,0,500,400);
+  let g=c.createRadialGradient(LAMP.x,LAMP.y,0,LAMP.x,LAMP.y,420); g.addColorStop(0,'rgba(255,232,150,.4)'); g.addColorStop(1,'rgba(255,220,140,0)');
+  c.fillStyle=g; c.fillRect(0,0,500,400);
+  g=c.createRadialGradient(LAMP.x,LAMP.y,0,LAMP.x,LAMP.y,34); g.addColorStop(0,'#fffbe6'); g.addColorStop(1,'rgba(255,220,120,0)');
+  c.fillStyle=g; c.beginPath(); c.arc(LAMP.x,LAMP.y,34,0,7); c.fill();
+  label(c,'전등 = 태양', LAMP.x+4, LAMP.y+46, {size:15});
+  // 시계 반대 방향 화살표
+  orbitArrow(c, OBS.x, OBS.y, R+26, th-40, th+40, '#ffd23f');
+  label(c,'↺ 시계 반대 방향', OBS.x-R-60, OBS.y+R+46, {size:16,color:'#ffd23f'});
+  const [rx,ry]=scr(th-50), [lx,ly]=scr(th+50);
+  label(c,'오른쪽', OBS.x+rx*(R+34), OBS.y+ry*(R+34), {size:15,color:'#ffd23f'});
+  label(c,'왼쪽', OBS.x+lx*(R+34), OBS.y+ly*(R+34), {size:15,color:'#ffd23f'});
+  // 보는 방향
+  c.strokeStyle='rgba(79,195,247,.9)'; c.lineWidth=3; c.setLineDash([6,5]); c.beginPath(); c.moveTo(OBS.x-24,OBS.y); c.lineTo(OBS.x-96,OBS.y); c.stroke(); c.setLineDash([]);
+  arrowHead(c, OBS.x-98, OBS.y, Math.PI, 9, 'rgba(79,195,247,.95)');
+  // 관측자
+  const [fx,fy]=scr(th), [px,py]=scr(th+90), [bx,by]=scr(th+TR.sweep), ball={x:OBS.x+bx*R, y:OBS.y+by*R}, hand={x:OBS.x+bx*76, y:OBS.y+by*76};
+  c.save(); c.translate(OBS.x-fx*3, OBS.y-fy*3); c.rotate(Math.atan2(py,px)); c.fillStyle='#e8786a'; c.beginPath(); c.ellipse(0,0,28,13,0,0,7); c.fill(); c.restore();
+  c.strokeStyle='#f1c7a3'; c.lineWidth=8; c.lineCap='round';
+  for(const s of [1,-1]){ c.beginPath(); c.moveTo(OBS.x+px*22*s+fx*4, OBS.y+py*22*s+fy*4); c.lineTo(hand.x,hand.y); c.stroke(); }
+  c.strokeStyle='#c49a6c'; c.lineWidth=4; c.beginPath(); c.moveTo(hand.x,hand.y); c.lineTo(ball.x,ball.y); c.stroke(); c.lineCap='butt';
+  c.fillStyle='#3b2a20'; c.beginPath(); c.arc(OBS.x,OBS.y,16,0,7); c.fill();
+  const la=Math.atan2(LAMP.y-ball.y, LAMP.x-ball.x);
+  c.fillStyle='#3c3f4c'; c.beginPath(); c.arc(ball.x,ball.y,14,0,7); c.fill();
+  c.fillStyle='#f2f1ec'; c.beginPath(); c.arc(ball.x,ball.y,14,la-Math.PI/2,la+Math.PI/2); c.closePath(); c.fill();
+  label(c,'관측자의 머리 = 지구', OBS.x+30, OBS.y+52, {size:15});
+  label(c,'공 = 달', ball.x, ball.y+(ball.y<OBS.y?-26:26), {size:15,color:'#cfe8ff'});
+  label(c,'👀 보는 방향', OBS.x-70, OBS.y+20, {size:13,color:'#9fdcff'});
+}
+function bindReviewQ(id, ans, ok, no, onOk){
+  const box=$(id), fb=$(id+'fb');
+  box.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    box.querySelectorAll('button').forEach(x=>x.classList.remove('ok','no'));
+    const right = +b.dataset.a===ans; b.classList.add(right?'ok':'no');
+    fb.className='fb '+(right?'ok':'no'); fb.textContent = right? '⭕ 정답! '+ok : '❌ 다시 생각해 보세요. '+no;
+    if (right) onOk();
+  });
+}
+bindReviewQ('rq1', 1, '달은 지구 주위를 시계 반대 방향으로 공전해요. (북극 위에서 볼 때)', '시계 바늘이 도는 방향과 달이 도는 방향을 비교해 보세요.',
+  ()=>{ TR.ans1=true; $('rstep2').style.display=''; resizeAll(); });
+bindReviewQ('rq2', 1, '앞을 볼 때 시계 반대 방향은 오른쪽 → 왼쪽이에요. 그래서 모형 실험에서 공을 오른쪽에서 왼쪽으로 움직여요.', '움직이는 공을 관측자가 보는 방향에서 생각해 보세요.',
+  ()=>{ TR.ans2=true; $('rstart').style.display=''; });
+function showExp(){
+  TR.done=true; $('rev1').style.display='none'; $('exp1').style.display='';
+  setSeat(true); resizeAll(); $('t1').scrollIntoView({behavior:'smooth', block:'start'});
+}
+$('bStart').onclick=showExp;
+$('bSkip').onclick=()=>{ TR.ans1=true; showExp(); };
+$('bReview').onclick=()=>{ $('rev1').style.display=''; if (TR.ans1) $('rstep2').style.display=''; if (TR.ans2) $('rstart').style.display=''; resizeAll(); $('rev1').scrollIntoView({behavior:'smooth', block:'start'}); };
+const reviewShown = ()=> $('rev1').style.display!=='none';
+const expShown = ()=> $('exp1').style.display!=='none';
+
+/* =========================================================
+   탭 2 : 일식 탐구
+   ========================================================= */
+const A2 = {W:800, H:500, E:{x:560,y:250,r:70}, R:200, mr:16};
+const D2 = {W:420, H:360, cx:210, cy:180, ER:160, Rp:104, Ru:20};
+const S2 = {W:420, H:280, cx:210, cy:130, s:44, m:48};
+const T2 = {phi:150, v:0, playing:false, speed:4, pin:{x:210,y:180}, shots:[], rec:null};
+const V2a = new View('cv2a', A2.W, A2.H), V2b = new View('cv2b', D2.W, D2.H), V2c = new View('cv2c', S2.W, S2.H);
+const stars2 = makeStars(140, A2.W, A2.H, 5), starsSky = makeStars(40, S2.W, 200, 9);
+// 낮인 쪽 지구 그림 (한 번만 만듦)
+const earthDisk = (()=>{
+  const N=2*D2.ER, cv=document.createElement('canvas'); cv.width=cv.height=N*2; const x=cv.getContext('2d'); x.scale(2,2);
+  const r=N/2; x.save(); x.beginPath(); x.arc(r,r,r,0,7); x.clip();
+  let g=x.createRadialGradient(r*0.8,r*0.75,10,r,r,r); g.addColorStop(0,'#4aa3e8'); g.addColorStop(1,'#1b4f98'); x.fillStyle=g; x.fillRect(0,0,N,N);
+  const rnd=mulberry32(21);
+  for(let i=0;i<14;i++){ const cx=rnd()*N, cy=rnd()*N, rx=20+rnd()*60, ry=14+rnd()*40;
+    x.fillStyle = rnd()<0.6? '#4f9a4a' : '#a99a5e'; x.beginPath(); x.ellipse(cx,cy,rx,ry,rnd()*3,0,7); x.fill();
+    x.fillStyle='#3f8a3e'; x.beginPath(); x.ellipse(cx+rx*0.3,cy-ry*0.2,rx*0.5,ry*0.45,rnd()*3,0,7); x.fill(); }
+  x.fillStyle='rgba(255,255,255,.35)';
+  for(let i=0;i<18;i++){ x.beginPath(); x.ellipse(rnd()*N, rnd()*N, 18+rnd()*40, 5+rnd()*8, rnd()*3, 0, 7); x.fill(); }
+  g=x.createRadialGradient(r,r,r*0.6,r,r,r); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,10,40,.45)'); x.fillStyle=g; x.fillRect(0,0,N,N);
+  x.restore(); return cv;
+})();
+
+function moon2(){ const [dx,dy]=scr(T2.phi); return {x:A2.E.x+dx*A2.R, y:A2.E.y+dy*A2.R}; }
+function shadow2(){ // 달의 그림자 중심(오른쪽 지구 그림 위)
+  if (Math.cos(T2.phi*DEG) > -0.3) return null;
+  const m=moon2(); return {x:D2.cx+(m.y-A2.E.y)*(D2.ER/A2.E.r), y:D2.cy - T2.v*140};
+}
+function sky2(pin){
+  pin = pin||T2.pin;
+  const sh=shadow2(); if(!sh) return {moon:null, cov:0};
+  const dx=pin.x-sh.x, dy=pin.y-sh.y, d=Math.hypot(dx,dy), {Ru,Rp}=D2, {s,m}=S2;
+  const sep = d<=Ru ? (m-s)*d/Ru : (m-s)+(d-Ru)*(2*s)/(Rp-Ru);
+  const ux = d>0? dx/d:0, uy = d>0? -dy/d:0;
+  return {moon:{x:S2.cx+ux*sep, y:S2.cy+uy*sep}, cov: overlapArea(s,m,sep)/(Math.PI*s*s), sep, d};
+}
+
+function drawSunGlowLeft(c, W, H){
+  let g=c.createLinearGradient(0,0,200,0); g.addColorStop(0,'rgba(255,200,80,.55)'); g.addColorStop(1,'rgba(255,200,80,0)');
+  c.fillStyle=g; c.fillRect(0,0,200,H);
+  g=c.createRadialGradient(-160,H/2,40,-160,H/2,330); g.addColorStop(0,'rgba(255,240,170,1)'); g.addColorStop(.55,'rgba(255,200,80,.8)'); g.addColorStop(1,'rgba(255,170,60,0)');
+  c.fillStyle=g; c.beginPath(); c.arc(-160,H/2,330,0,7); c.fill();
+  c.strokeStyle='rgba(255,220,120,.18)'; c.lineWidth=2;
+  for(let y=40;y<H;y+=46){ c.beginPath(); c.moveTo(150,y); c.lineTo(W,y); c.stroke(); }
+  label(c,'☀️ 태양 빛 →', 92, 30, {size:18,color:'#ffe08a'});
+}
+function drawEarthTop(c, E, opt={}){
+  let g=c.createRadialGradient(E.x-20,E.y-20,8,E.x,E.y,E.r); g.addColorStop(0,'#5fb2f0'); g.addColorStop(1,'#1e5aa8');
+  c.fillStyle=g; c.beginPath(); c.arc(E.x,E.y,E.r,0,7); c.fill();
+  c.fillStyle='#4f9a4a'; c.beginPath(); c.ellipse(E.x-14,E.y-18,26,16,.5,0,7); c.ellipse(E.x+20,E.y+16,20,13,-.4,0,7); c.fill();
+  c.fillStyle='rgba(2,4,20,.62)'; c.beginPath(); c.arc(E.x,E.y,E.r,-Math.PI/2,Math.PI/2); c.closePath(); c.fill(); // 밤
+  if (opt.atmo){ c.strokeStyle='rgba(140,200,255,.8)'; c.lineWidth=6; c.beginPath(); c.arc(E.x,E.y,E.r+4,0,7); c.stroke(); }
+  c.fillStyle='#fff'; c.beginPath(); c.arc(E.x,E.y,3,0,7); c.fill();
+  label(c,'지구', E.x, E.y+E.r+20, {size:17});
+  label(c,'낮', E.x-E.r*0.55, E.y, {size:15,bg:false,color:'#fff'});
+  label(c,'밤', E.x+E.r*0.55, E.y, {size:15,bg:false,color:'#9fb0e0'});
+}
+function drawMoonTop(c, m, r){
+  c.fillStyle='#4a4d5a'; c.beginPath(); c.arc(m.x,m.y,r,0,7); c.fill();
+  c.fillStyle='#e7e6df'; c.beginPath(); c.arc(m.x,m.y,r,Math.PI/2,Math.PI*1.5); c.closePath(); c.fill();
+}
+
+function drawT2a(){
+  const c=V2a.ctx, {E,R,mr}=A2, m=moon2();
+  c.fillStyle='#060920'; c.fillRect(0,0,A2.W,A2.H); drawStars(c, stars2, .8);
+  drawSunGlowLeft(c, A2.W, A2.H);
+  // 궤도
+  c.setLineDash([6,8]); c.strokeStyle='rgba(185,192,234,.5)'; c.lineWidth=2; c.beginPath(); c.arc(E.x,E.y,R,0,7); c.stroke(); c.setLineDash([]);
+  orbitArrow(c,E.x,E.y,R,60,100,'rgba(255,210,63,.9)'); orbitArrow(c,E.x,E.y,R,240,280,'rgba(255,210,63,.9)');
+  label(c,'달의 공전 방향', E.x, E.y-R-24, {size:16,color:'#ffd23f'});
+  // 삭·망 표시
+  c.setLineDash([4,4]); c.strokeStyle='rgba(255,255,255,.4)'; c.beginPath(); c.arc(E.x-R,E.y,mr+8,0,7); c.stroke(); c.beginPath(); c.arc(E.x+R,E.y,mr+8,0,7); c.stroke(); c.setLineDash([]);
+  label(c,'삭', E.x-R, E.y+mr+28, {size:16,color:'#cfd6ff'}); label(c,'망', E.x+R, E.y+mr+28, {size:16,color:'#cfd6ff'});
+  drawEarthTop(c, E);
+  // 달의 그림자
+  if (m.x < E.x){
+    const Lu=150, Lp=200, k=0.22;
+    const um=[[m.x,m.y-mr],[m.x+Lu,m.y],[m.x,m.y+mr]];
+    const pe=[[m.x,m.y-mr],[m.x+Lp,m.y-mr-k*Lp],[m.x+Lp,m.y+mr+k*Lp],[m.x,m.y+mr]];
+    // 우주 공간
+    c.save(); c.beginPath(); c.rect(0,0,E.x,A2.H); c.arc(E.x,E.y,E.r,0,7); c.clip('evenodd');
+    c.fillStyle='rgba(120,128,150,.28)'; pathPoly(c,pe); c.fill();
+    c.fillStyle='rgba(0,0,8,.75)'; pathPoly(c,um); c.fill(); c.restore();
+    // 지구 표면에 닿은 부분
+    c.save(); c.beginPath(); c.arc(E.x,E.y,E.r,0,7); c.arc(E.x,E.y,E.r-12,0,7); c.clip('evenodd');
+    c.beginPath(); c.rect(0,0,E.x,A2.H); c.clip();
+    c.fillStyle='rgba(30,30,40,.6)'; pathPoly(c,pe); c.fill();
+    c.fillStyle='rgba(0,0,0,.95)'; pathPoly(c,um); c.fill(); c.restore();
+  }
+  drawMoonTop(c, m, mr);
+  label(c,'달', m.x, m.y-mr-16, {size:16});
+  if (Math.abs(norm180(T2.phi-180))<1.5) label(c,'태양 – 달 – 지구가 일직선!', 400, A2.H-26, {size:19,color:'#ffd23f'});
+}
+
+function drawT2b(){
+  const c=V2b.ctx, {cx,cy,ER,Rp,Ru}=D2, sh=shadow2();
+  c.fillStyle='#060920'; c.fillRect(0,0,D2.W,D2.H);
+  c.drawImage(earthDisk, cx-ER, cy-ER, 2*ER, 2*ER);
+  if (sh){
+    // 그림자가 지나가는 길
+    c.setLineDash([8,6]); c.strokeStyle='rgba(255,210,63,.55)'; c.lineWidth=2;
+    c.beginPath(); c.moveTo(0,sh.y-Rp); c.lineTo(D2.W,sh.y-Rp); c.moveTo(0,sh.y+Rp); c.lineTo(D2.W,sh.y+Rp); c.stroke(); c.setLineDash([]);
+    c.save(); c.beginPath(); c.arc(cx,cy,ER,0,7); c.clip();
+    let g=c.createRadialGradient(sh.x,sh.y,0,sh.x,sh.y,Rp);
+    g.addColorStop(0,'rgba(20,24,40,.7)'); g.addColorStop(Ru/Rp,'rgba(20,24,40,.66)'); g.addColorStop(.75,'rgba(20,24,40,.4)'); g.addColorStop(1,'rgba(20,24,40,.12)');
+    c.fillStyle=g; c.beginPath(); c.arc(sh.x,sh.y,Rp,0,7); c.fill();
+    c.fillStyle='rgba(0,0,6,.92)'; c.beginPath(); c.arc(sh.x,sh.y,Ru,0,7); c.fill();
+    c.setLineDash([7,5]); c.strokeStyle='rgba(220,226,255,.8)'; c.lineWidth=2; c.beginPath(); c.arc(sh.x,sh.y,Rp,0,7); c.stroke(); c.setLineDash([]);
+    c.restore();
+    label(c,'그림자가 지나가는 방향 →', D2.W-12, clamp(sh.y-Rp-14, 16, D2.H-16), {size:15,align:'right',color:'#ffd23f'});
+  } else {
+    label(c,'달이 삭 근처에 오면 달의 그림자가 생겨요', cx, D2.H-20, {size:16,color:'#cfd6ff'});
+  }
+  // 관측자 핀
+  const p=T2.pin;
+  c.fillStyle='rgba(0,0,0,.35)'; c.beginPath(); c.ellipse(p.x,p.y+2,8,3,0,0,7); c.fill();
+  c.fillStyle='#ff4d5a'; c.beginPath(); c.moveTo(p.x,p.y); c.arc(p.x,p.y-24,11,Math.PI*0.75,Math.PI*0.25); c.closePath(); c.fill();
+  c.strokeStyle='#fff'; c.lineWidth=2; c.stroke();
+  c.fillStyle='#fff'; c.beginPath(); c.arc(p.x,p.y-24,4,0,7); c.fill();
+  label(c,'관측자', p.x, p.y-50, {size:14});
+  label(c,'북', cx, 14, {size:14,bg:false,color:'#cfd6ff'});
+}
+
+function drawT2c(clean, pin){
+  const c=V2c.ctx, {cx,cy,s,m}=S2, k=sky2(pin);
+  const cov=k.cov, total = cov>=0.999;
+  const dark = cov<0.9 ? cov*0.28 : 0.25 + (cov-0.9)/0.1*0.68;
+  let g=c.createLinearGradient(0,0,0,S2.H); g.addColorStop(0,'#3f8fdc'); g.addColorStop(1,'#a9d8ff');
+  c.fillStyle=g; c.fillRect(0,0,S2.W,S2.H);
+  c.fillStyle=`rgba(4,8,30,${dark})`; c.fillRect(0,0,S2.W,S2.H);
+  if (total) drawStars(c, starsSky, .9);
+  // 코로나(태양의 대기)
+  if (cov>0.97){
+    const a=(cov-0.97)/0.03;
+    c.save(); c.globalAlpha=a; c.translate(cx,cy);
+    for(let i=0;i<16;i++){ c.rotate(Math.PI/8); const L=s*(1.6+0.7*((i*37)%5)/5);
+      g=c.createLinearGradient(0,0,L,0); g.addColorStop(0,'rgba(255,255,255,.55)'); g.addColorStop(1,'rgba(255,255,255,0)');
+      c.fillStyle=g; c.beginPath(); c.moveTo(s*0.9,-6); c.lineTo(L,0); c.lineTo(s*0.9,6); c.closePath(); c.fill(); }
+    g=c.createRadialGradient(0,0,s,0,0,s*2.2); g.addColorStop(0,'rgba(240,245,255,.95)'); g.addColorStop(.3,'rgba(210,225,255,.45)'); g.addColorStop(1,'rgba(200,215,255,0)');
+    c.fillStyle=g; c.beginPath(); c.arc(0,0,s*2.2,0,7); c.fill(); c.restore();
+  }
+  // 태양
+  g=c.createRadialGradient(cx,cy,s*0.9,cx,cy,s*2.4); g.addColorStop(0,`rgba(255,240,170,${0.75*(1-cov)})`); g.addColorStop(1,'rgba(255,240,170,0)');
+  c.fillStyle=g; c.beginPath(); c.arc(cx,cy,s*2.4,0,7); c.fill();
+  g=c.createRadialGradient(cx-10,cy-10,4,cx,cy,s); g.addColorStop(0,'#fffbe6'); g.addColorStop(.75,'#ffe27a'); g.addColorStop(1,'#ffc23a');
+  c.fillStyle=g; c.beginPath(); c.arc(cx,cy,s,0,7); c.fill();
+  // 달 (태양 앞을 지나가는 어두운 면)
+  if (k.moon){
+    c.save(); c.beginPath(); c.arc(cx,cy,s+1,0,7); c.clip();
+    c.fillStyle= total? '#04050c' : '#1a2138'; c.beginPath(); c.arc(k.moon.x,k.moon.y,m,0,7); c.fill(); c.restore();
+    if ($('tg2outline').checked && !total){ c.setLineDash([6,5]); c.strokeStyle='rgba(255,255,255,.7)'; c.lineWidth=2; c.beginPath(); c.arc(k.moon.x,k.moon.y,m,0,7); c.stroke(); c.setLineDash([]);
+      if (!clean) label(c,'달', k.moon.x, k.moon.y+m+14, {size:14}); }
+    if (total){ c.fillStyle='#04050c'; c.beginPath(); c.arc(k.moon.x,k.moon.y,m,0,7); c.fill(); }
+  }
+  // 땅
+  c.fillStyle=`rgb(${Math.round(lerp(40,8,dark))},${Math.round(lerp(70,12,dark))},${Math.round(lerp(48,14,dark))})`;
+  c.beginPath(); c.moveTo(0,S2.H); c.lineTo(0,250); for(let x=0;x<=S2.W;x+=30) c.lineTo(x, 246 + 10*Math.sin(x*0.05) - ((x/30)%3===0?18:0)); c.lineTo(S2.W,S2.H); c.fill();
+  if (!clean){
+    label(c,'⚠ 실제 태양은 맨눈으로 보지 않아요', S2.W-8, S2.H-14, {size:13,align:'right'});
+    label(c,'동(왼쪽)', 40, 16, {size:13,bg:false,color:'#eaf4ff'}); label(c,'서(오른쪽)', S2.W-44, 16, {size:13,bg:false,color:'#eaf4ff'});
+  }
+  return k;
+}
+
+function update2(dt){
+  if (T2.rec){
+    const R=T2.rec; R.t+=dt;
+    const f=Math.min(1, R.t/R.T); T2.phi = lerp(R.p0, R.p1, f);
+    if (f >= R.idx/(R.n-1) - 1e-9){
+      drawT2c(true);
+      T2.shots.push(V2c.snap(S2.cx-80, S2.cy-80, 160, 160, 160));
+      renderShots('shots2', T2.shots, true); R.idx++;
+    }
+    if (R.idx>=R.n){ T2.rec=null; $('b2rec').disabled=false; }
+  } else if (T2.playing){ T2.phi = norm180(T2.phi + T2.speed*dt); if (T2.phi<0) T2.phi+=360; }
+  const k=sky2(), st=$('st2'); let t, cls='';
+  const sh=shadow2();
+  if (!sh) t='🌍 달이 삭 위치(태양과 지구 사이)에서 멀어서 일식이 일어나지 않아요.';
+  else if (k.cov>=0.999){ t='🌑 개기일식! 📍관측자가 달의 진한 그림자 속에 있어서 태양이 완전히 가려졌어요. 태양의 대기(코로나)가 보여요.'; cls='total'; }
+  else if (k.cov>0){ t=`🌘 부분일식! 📍관측자가 달의 옅은 그림자 속에 있어서 태양의 일부(${Math.round(k.cov*100)}%)만 가려졌어요.`; cls='part'; }
+  else if (Math.hypot(T2.pin.x-sh.x, T2.pin.y-sh.y) < 400) t='☀️ 📍관측자는 낮이지만 달의 그림자 바깥에 있어서 일식을 볼 수 없어요.';
+  else t='☀️ 달의 그림자가 아직 지구에 닿지 않았어요.';
+  st.textContent=t; st.className='status '+cls;
+}
+
+drag(V2a, p=>{ if(T2.rec) return false; const m=moon2(); if (Math.hypot(p.x-A2.E.x,p.y-A2.E.y) < A2.E.r+10 && Math.hypot(p.x-m.x,p.y-m.y)>40) return false; T2.playing=false; $('b2play').textContent='▶ 공전 시작'; setPhi2(p); }, p=>setPhi2(p));
+function setPhi2(p){ let a=Math.atan2(-(p.y-A2.E.y), p.x-A2.E.x)/DEG; if(a<0) a+=360; T2.phi=a; }
+drag(V2b, p=>{ if(T2.rec) return false; setPin2(p); }, p=>setPin2(p));
+function setPin2(p){ const dx=p.x-D2.cx, dy=p.y-D2.cy, d=Math.hypot(dx,dy), lim=D2.ER-6; const f=d>lim? lim/d:1; T2.pin={x:D2.cx+dx*f, y:D2.cy+dy*f}; }
+$('b2play').onclick=()=>{ if(T2.rec) return; T2.playing=!T2.playing; $('b2play').textContent=T2.playing?'⏸ 멈춤':'▶ 공전 시작'; };
+$('b2go').onclick=()=>{ if(T2.rec) return; T2.playing=false; $('b2play').textContent='▶ 공전 시작'; T2.phi=165; };
+document.querySelectorAll('#t2 .speed button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#t2 .speed button').forEach(x=>x.classList.toggle('on',x===b)); T2.speed=+b.dataset.sp; });
+$('r2v').oninput=e=>{ T2.v=+e.target.value; };
+$('b2mid').onclick=()=>{ T2.v=0; $('r2v').value=0; };
+$('b2rec').onclick=()=>{
+  T2.playing=false; $('b2play').textContent='▶ 공전 시작';
+  // 그림자 중심이 📍 왼쪽 → 오른쪽으로 지나가도록 달의 위치 범위 계산
+  const toPhi = sx => 180 + Math.asin(clamp((sx-D2.cx)*(A2.E.r/D2.ER)/A2.R, -1, 1))/DEG;
+  const span = D2.Rp*1.08;
+  T2.shots=[]; renderShots('shots2', [], true);
+  T2.rec={t:0, T:5, n:9, idx:0, p0:toPhi(T2.pin.x-span), p1:toPhi(T2.pin.x+span)};
+  $('b2rec').disabled=true;
+};
+$('b2clear').onclick=()=>{ if(T2.rec) return; T2.shots=[]; renderShots('shots2',[],true,'버튼을 누르면 달이 움직이며 9장을 찍어요.'); };
+
+makeQuiz('quiz2', [
+  {q:'일식이 일어날 때 태양, 달, 지구의 순서는?', o:['태양 – 달 – 지구','태양 – 지구 – 달'], a:0, ok:'달이 태양과 지구 사이에 와서 태양을 가려요.', no:'무엇이 태양을 가리나요?'},
+  {q:'일식이 일어날 때 달의 위치는?', o:['삭','상현','망','하현'], a:0, ok:'달이 삭의 위치에 올 때 일식이 일어나요.', no:'태양과 지구 사이에 달이 있는 위치예요.'},
+  {q:'개기일식이 일어날 때 태양은 어느 쪽부터 가려지나요?', o:['왼쪽','오른쪽'], a:1, ok:'지구에서 볼 때 달은 태양의 오른쪽에서 왼쪽으로 이동해서, 태양의 오른쪽부터 가려져요.', no:'🎬 일식 진행 사진을 순서대로 보세요.'},
+  {q:'달이 태양을 완전히 가리는 현상은?', o:['개기일식','부분일식'], a:0, ok:'달의 진한 그림자(본그림자) 속에서 볼 수 있어요.', no:'태양이 ‘완전히’ 가려지는 경우예요.'},
+  {q:'“일식은 지구에서 낮인 모든 지역에서 볼 수 있다.” 맞을까요?', o:['⭕ 맞다','❌ 틀리다'], a:1, ok:'일식은 달의 그림자가 닿는 지역에서만 볼 수 있어요. 낮이어도 그림자 바깥이면 볼 수 없어요.', no:'📍관측자를 그림자 바깥의 낮인 곳으로 옮겨 보세요.'},
+]);
+
+/* =========================================================
+   탭 3 : 월식 탐구
+   ========================================================= */
+const A3 = {W:800, H:500, E:{x:300,y:250,r:70}, R:200, mr:16, UL:700, PK:0.2};
+const P3 = {W:500, H:400, cx:250, cy:200, MR:40};
+P3.k = P3.MR/A3.mr;
+P3.Ru = A3.E.r*(1-A3.R/A3.UL)*P3.k;            // 지구 본그림자 반지름(달 위치)
+P3.Rp = (A3.E.r + A3.PK*A3.R)*P3.k;            // 반그림자 반지름
+const T3 = {phi:340, v:0, playing:false, speed:4, psi:0, shots:[], rec:null};
+const V3a = new View('cv3a', A3.W, A3.H), V3b = new View('cv3b', P3.W, P3.H);
+const stars3a = makeStars(140, A3.W, A3.H, 15), stars3b = makeStars(110, P3.W, P3.H, 17);
+const MOON_N = 160, moonGray = makeMoonTex(MOON_N);
+const moonCv = document.createElement('canvas'); moonCv.width=moonCv.height=MOON_N;
+const moonCtx = moonCv.getContext('2d'), moonImg = moonCtx.createImageData(MOON_N, MOON_N);
+
+function moon3(){ const [dx,dy]=scr(T3.phi); return {x:A3.E.x+dx*A3.R, y:A3.E.y+dy*A3.R}; }
+function moonP3(){ if (Math.cos(T3.phi*DEG) < 0.6) return null; const m=moon3(); return {x:P3.cx+(m.y-A3.E.y)*P3.k, y:P3.cy - T3.v*140}; }
+function state3(){
+  const mp=moonP3(); if(!mp) return {mp:null, cov:0, total:false};
+  const dc=Math.hypot(mp.x-P3.cx, mp.y-P3.cy);
+  return {mp, dc, cov: overlapArea(P3.Ru, P3.MR, dc)/(Math.PI*P3.MR*P3.MR), total: dc+P3.MR <= P3.Ru};
+}
+function pinInfo3(){
+  const n=[Math.cos(T3.psi*DEG), Math.sin(T3.psi*DEG)];
+  const night = n[0] > 0.05, day = n[0] < -0.05;
+  const mm=[A3.R*Math.cos(T3.phi*DEG) - A3.E.r*n[0], A3.R*Math.sin(T3.phi*DEG) - A3.E.r*n[1]];
+  const moonUp = n[0]*mm[0] + n[1]*mm[1] > 0;
+  return {night, day, moonUp};
+}
+
+function renderMoon3(st){
+  const N=MOON_N, sc=N/(2*P3.MR), d=moonImg.data, {Ru,Rp,cx,cy,MR}=P3;
+  const red = Math.pow(clamp((st.cov-0.82)/0.18,0,1),1.5);
+  for(let j=0;j<N;j++) for(let i=0;i<N;i++){
+    const idx=j*N+i, o=idx*4, gv=moonGray[idx];
+    const px=(i+.5)/sc-MR, py=(j+.5)/sc-MR, rr=px*px+py*py;
+    if (rr > MR*MR){ d[o+3]=0; continue; }
+    const dd=Math.hypot(st.mp.x+px-cx, st.mp.y+py-cy);
+    const pen = dd>=Rp ? 1 : dd<=Ru ? 0.6 : 1-0.4*(Rp-dd)/(Rp-Ru);
+    const tu = clamp((Ru+3-dd)/6, 0, 1);
+    const lit=[gv*240*pen, gv*238*pen, gv*230*pen];
+    const um=[lerp(gv*48,gv*200,red), lerp(gv*36,gv*62,red), lerp(gv*32,gv*38,red)];
+    d[o]=lerp(lit[0],um[0],tu); d[o+1]=lerp(lit[1],um[1],tu); d[o+2]=lerp(lit[2],um[2],tu);
+    d[o+3]= rr > (MR-1)*(MR-1) ? 255*clamp(MR-Math.sqrt(rr),0,1) : 255;
+  }
+  moonCtx.putImageData(moonImg,0,0);
+}
+
+function drawT3a(){
+  const c=V3a.ctx, {E,R,mr,UL,PK}=A3, m=moon3(), W=A3.W, H=A3.H;
+  c.fillStyle='#060920'; c.fillRect(0,0,W,H); drawStars(c, stars3a, .8);
+  drawSunGlowLeft(c, W, H);
+  // 지구의 그림자
+  const L=W-E.x;
+  const pe=[[E.x,E.y-E.r],[W,E.y-E.r-PK*L],[W,E.y+E.r+PK*L],[E.x,E.y+E.r]];
+  const um=[[E.x,E.y-E.r],[E.x+UL,E.y],[E.x,E.y+E.r]];
+  c.fillStyle='rgba(120,128,150,.2)'; pathPoly(c,pe); c.fill();
+  c.fillStyle='rgba(0,0,8,.55)'; pathPoly(c,um); c.fill();
+  label(c,'지구의 그림자', E.x+E.r+70, E.y+E.r+44, {size:15,color:'#cfd6ff'});
+  // 붉은 빛
+  const red=$('tg3red').checked;
+  if (red){
+    c.strokeStyle='rgba(255,110,70,.9)'; c.lineWidth=3;
+    for(const s of [-1,1]){
+      c.beginPath(); c.moveTo(150, E.y+s*(E.r+8)); c.lineTo(E.x-6, E.y+s*(E.r+8));
+      c.quadraticCurveTo(E.x+60, E.y+s*(E.r+6), E.x+A3.R-10, E.y+s*6); c.stroke();
+      arrowHead(c, E.x+A3.R-10, E.y+s*6, Math.atan2(-s*(E.r), A3.R-70), 10, 'rgba(255,110,70,.95)');
+    }
+    label(c,'지구 대기를 지나며 꺾인 붉은 빛', E.x-20, E.y-E.r-26, {size:15,color:'#ffb59a'});
+  }
+  // 궤도
+  c.setLineDash([6,8]); c.strokeStyle='rgba(185,192,234,.5)'; c.lineWidth=2; c.beginPath(); c.arc(E.x,E.y,R,0,7); c.stroke(); c.setLineDash([]);
+  orbitArrow(c,E.x,E.y,R,60,100,'rgba(255,210,63,.9)'); orbitArrow(c,E.x,E.y,R,240,280,'rgba(255,210,63,.9)');
+  label(c,'달의 공전 방향', E.x, E.y-R-24, {size:16,color:'#ffd23f'});
+  c.setLineDash([4,4]); c.strokeStyle='rgba(255,255,255,.4)'; c.beginPath(); c.arc(E.x+R,E.y,mr+8,0,7); c.stroke(); c.beginPath(); c.arc(E.x-R,E.y,mr+8,0,7); c.stroke(); c.setLineDash([]);
+  label(c,'망', E.x+R+44, E.y-30, {size:16,color:'#cfd6ff'}); label(c,'삭', E.x-R, E.y+mr+28, {size:16,color:'#cfd6ff'});
+  drawEarthTop(c, E, {atmo:red});
+  // 달 (지구 그림자 속이면 어둡게·붉게)
+  drawMoonTop(c, m, mr);
+  const st=state3();
+  c.save(); c.beginPath(); c.arc(m.x,m.y,mr,0,7); c.clip();
+  if (st.total){ c.fillStyle='rgba(170,55,30,.85)'; c.fillRect(m.x-mr,m.y-mr,2*mr,2*mr); }
+  else { c.fillStyle='rgba(15,8,8,.8)'; pathPoly(c,um); c.fill(); }
+  c.restore();
+  label(c,'달', m.x, m.y-mr-16, {size:16});
+  // 관측자
+  const [nx,ny]=scr(T3.psi), px=E.x+nx*(E.r+2), py=E.y+ny*(E.r+2);
+  c.save(); c.translate(px,py); c.rotate(Math.atan2(ny,nx)+Math.PI/2);
+  c.fillStyle='#ff4d5a'; c.beginPath(); c.moveTo(0,0); c.arc(0,-20,10,Math.PI*0.75,Math.PI*0.25); c.closePath(); c.fill();
+  c.strokeStyle='#fff'; c.lineWidth=2; c.stroke(); c.fillStyle='#fff'; c.beginPath(); c.arc(0,-20,3.5,0,7); c.fill(); c.restore();
+  label(c,'관측자', E.x+nx*(E.r+46), E.y+ny*(E.r+46), {size:14});
+  if (Math.abs(norm180(T3.phi))<1.5) label(c,'태양 – 지구 – 달이 일직선!', 400, H-26, {size:19,color:'#ffd23f'});
+}
+
+function drawT3b(clean){
+  const c=V3b.ctx, {W,H,cx,cy,Ru,Rp,MR}=P3, st=state3();
+  let g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,'#040720'); g.addColorStop(1,'#0e1542');
+  c.fillStyle=g; c.fillRect(0,0,W,H); drawStars(c, stars3b, .9);
+  if ($('tg3lines').checked){
+    c.setLineDash([10,8]); c.lineWidth=2.5;
+    c.strokeStyle='rgba(141,149,184,.75)'; c.beginPath(); c.arc(cx,cy,Rp,0,7); c.stroke();
+    c.strokeStyle='rgba(255,155,122,.9)'; c.beginPath(); c.arc(cx,cy,Ru,0,7); c.stroke(); c.setLineDash([]);
+    if (!clean){ label(c,'진한 그림자(본그림자)', cx, cy-Ru+18, {size:14,color:'#ffb59a'}); }
+  }
+  if (st.mp){
+    renderMoon3(st);
+    const glow = 1 - 0.85*st.cov;
+    g=c.createRadialGradient(st.mp.x,st.mp.y,MR,st.mp.x,st.mp.y,MR*1.8); g.addColorStop(0,`rgba(230,235,255,${0.35*glow})`); g.addColorStop(1,'rgba(230,235,255,0)');
+    c.fillStyle=g; c.beginPath(); c.arc(st.mp.x,st.mp.y,MR*1.8,0,7); c.fill();
+    c.drawImage(moonCv, st.mp.x-MR, st.mp.y-MR, 2*MR, 2*MR);
+    if (!clean){
+      label(c,'← 달이 움직이는 방향', 14, 22, {size:15,align:'left',color:'#ffd23f'});
+    }
+  } else if (!clean){
+    label(c,'달이 망 근처에 오면 여기에 보여요', cx, cy, {size:18,color:'#cfd6ff'});
+  }
+  if (!clean){
+    const pi=pinInfo3();
+    if (!(pi.night && pi.moonUp)){
+      c.fillStyle='rgba(120,170,230,.82)'; c.fillRect(0,0,W,H);
+      label(c, pi.day? '📍 이곳은 지금 낮이에요' : '📍 이곳에서는 달이 지평선 아래에 있어요', cx, cy-16, {size:20});
+      label(c, '관측자를 지구의 밤인 쪽으로 옮겨 보세요', cx, cy+20, {size:16});
+    }
+  }
+}
+
+function update3(dt){
+  if (T3.rec){
+    const R=T3.rec; R.t+=dt; const f=Math.min(1,R.t/R.T); T3.phi = lerp(R.p0,R.p1,f); if (T3.phi<0) T3.phi+=360;
+    if (f >= R.idx/(R.n-1) - 1e-9){
+      const st=state3();
+      drawT3b(true);
+      if (st.mp) T3.shots.push(V3b.snap(st.mp.x-MR3s, st.mp.y-MR3s, 2*MR3s, 2*MR3s, 160));
+      renderShots('shots3', T3.shots, true); R.idx++;
+    }
+    if (R.idx>=R.n){ T3.rec=null; $('b3rec').disabled=false; }
+  } else if (T3.playing){ T3.phi = (T3.phi + T3.speed*dt) % 360; }
+  const st=state3(), el=$('st3'); let t, cls='';
+  if (!st.mp) t='🌍 달이 망 위치(지구를 사이에 두고 태양 반대쪽)에서 멀어서 월식이 일어나지 않아요.';
+  else if (st.total){ t='🔴 개기월식! 달 전체가 지구의 진한 그림자 속에 들어가 붉게 보여요.'; cls='red'; }
+  else if (st.cov>0){ t=`🌗 부분월식! 달의 일부(${Math.round(st.cov*100)}%)가 지구의 그림자에 가려져 어둡게 보여요.`; cls='part'; }
+  else t='🌕 달이 아직 지구의 진한 그림자 밖에 있어요. (보름달)';
+  el.textContent=t; el.className='status '+cls;
+  const pi=pinInfo3(), ep=$('st3pin');
+  if (pi.night && pi.moonUp){ ep.textContent = st.cov>0 ? '📍 관측자: 밤이라 지금 월식을 볼 수 있어요!' : '📍 관측자: 밤이라 달을 볼 수 있어요.'; ep.className='status total'; }
+  else if (pi.day){ ep.textContent='📍 관측자: 낮이라 달이 지평선 아래에 있어 볼 수 없어요.'; ep.className='status'; }
+  else { ep.textContent='📍 관측자: 해가 뜨거나 지는 무렵이라 달이 지평선 근처에 있어요.'; ep.className='status'; }
+}
+const MR3s = P3.MR*1.35;
+
+drag(V3a, p=>{
+  if (T3.rec) return false;
+  const de=Math.hypot(p.x-A3.E.x, p.y-A3.E.y);
+  if (de < A3.E.r+40){ T3.drag='pin'; setPsi(p); return; }
+  T3.drag='moon'; T3.playing=false; $('b3play').textContent='▶ 공전 시작'; setPhi3(p);
+}, p=>{ T3.drag==='pin' ? setPsi(p) : setPhi3(p); });
+function setPhi3(p){ let a=Math.atan2(-(p.y-A3.E.y), p.x-A3.E.x)/DEG; if(a<0) a+=360; T3.phi=a; }
+function setPsi(p){ T3.psi = Math.atan2(-(p.y-A3.E.y), p.x-A3.E.x)/DEG; }
+$('b3play').onclick=()=>{ if(T3.rec) return; T3.playing=!T3.playing; $('b3play').textContent=T3.playing?'⏸ 멈춤':'▶ 공전 시작'; };
+$('b3go').onclick=()=>{ if(T3.rec) return; T3.playing=false; $('b3play').textContent='▶ 공전 시작'; T3.phi=340; };
+document.querySelectorAll('#t3 .speed button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#t3 .speed button').forEach(x=>x.classList.toggle('on',x===b)); T3.speed=+b.dataset.sp; });
+$('r3v').oninput=e=>{ T3.v=+e.target.value; };
+$('b3mid').onclick=()=>{ T3.v=0; $('r3v').value=0; };
+$('b3rec').onclick=()=>{
+  T3.playing=false; $('b3play').textContent='▶ 공전 시작';
+  // 달이 오른쪽 밖 → 왼쪽 밖으로 지나가도록
+  const span=(P3.Ru+P3.MR+14)/P3.k, toPhi = x => -Math.asin(clamp(x/A3.R,-1,1))/DEG; // x: 화면 오른쪽(+)
+  T3.shots=[]; renderShots('shots3',[],true);
+  T3.rec={t:0, T:5, n:9, idx:0, p0:toPhi(span), p1:toPhi(-span)};
+  $('b3rec').disabled=true;
+};
+$('b3clear').onclick=()=>{ if(T3.rec) return; T3.shots=[]; renderShots('shots3',[],true,'버튼을 누르면 달이 움직이며 9장을 찍어요.'); };
+
+makeQuiz('quiz3', [
+  {q:'월식이 일어날 때 태양, 지구, 달의 순서는?', o:['태양 – 달 – 지구','태양 – 지구 – 달'], a:1, ok:'지구가 태양과 달 사이에 있어서 달이 지구의 그림자 속에 들어가요.', no:'달은 누구의 그림자 속으로 들어가나요?'},
+  {q:'월식이 일어날 때 달의 위치는?', o:['삭','상현','망','하현'], a:2, ok:'달이 망의 위치에 올 때 월식이 일어나요. 그래서 월식은 보름달에서 일어나요.', no:'지구를 사이에 두고 태양 반대쪽에 달이 있는 위치예요.'},
+  {q:'개기월식이 일어날 때 달은 어느 쪽부터 가려지나요?', o:['왼쪽','오른쪽'], a:0, ok:'달은 왼쪽부터 지구의 그림자 속으로 들어가서 왼쪽부터 가려져요.', no:'🎬 월식 진행 사진을 순서대로 보세요.'},
+  {q:'개기월식 때 달이 붉게 보이는 까닭은?', o:['달 표면이 원래 붉어서','지구 대기를 지나며 꺾인 붉은 빛이 달에 닿아서','태양이 붉게 변해서'], a:1, ok:'태양 빛이 지구 대기를 지나면서 꺾이고, 그중 붉은 빛이 달까지 닿아 반사되기 때문이에요.', no:'🔴 붉은 빛 보기를 켜고 다시 살펴보세요.'},
+  {q:'월식 때 보름달이 조금씩 어두워지는 까닭은?', o:['달이 조금씩 지구의 그림자로 들어가 가려지기 때문','달이 조금씩 태양을 가리기 때문'], a:0, ok:'달이 조금씩 지구의 그림자로 들어가 가려지기 때문이에요.', no:'월식은 무엇의 그림자에 달이 들어가는 현상인가요?'},
+  {q:'스스로 평가 1: 일식은 태양, ( ㉠ ), ( ㉡ ) 순으로 일직선상에 놓일 때 일어난다.', o:['㉠ 달, ㉡ 지구','㉠ 지구, ㉡ 달'], a:0, ok:'일식은 태양 – 달 – 지구 순서일 때 일어나요.', no:'② 일식 탐구 탭을 떠올려 보세요.'},
+  {q:'스스로 평가 2: ( 일식 / 월식 )은 지구에서 밤이 되는 모든 지역에서 볼 수 있다.', o:['일식','월식'], a:1, ok:'월식은 밤이 되는 모든 지역에서 볼 수 있어요. 일식은 달의 그림자가 닿는 곳에서만 보여요.', no:'📍관측자를 밤인 여러 곳으로 옮겨 보세요.'},
+]);
+
+/* =========================================================
+   크기 조절과 반복 그리기
+   ========================================================= */
+const VIEWS = {t1:[V1a,V1b,VR1,VR2], t2:[V2a,V2b,V2c], t3:[V3a,V3b]};
+function resizeAll(){ (VIEWS[active]||[]).forEach(v=>v.resize()); }
+window.addEventListener('resize', resizeAll);
+document.querySelectorAll('input[type=checkbox]').forEach(x=>x.addEventListener('change',()=>{}));
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+  if (active==='t1'){
+    if (reviewShown()){ drawR1(dt); if (TR.ans1) drawR2(dt); }
+    if (expShown()){ update1(dt); drawT1a(); drawT1b(false); }
+  }
+  else if (active==='t2'){ update2(dt); drawT2a(); drawT2b(); drawT2c(false); }
+  else { update3(dt); drawT3a(); drawT3b(false); }
+  requestAnimationFrame(loop);
+}
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(resizeAll);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
