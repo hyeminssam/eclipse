@@ -819,8 +819,9 @@ function drawT1b(clean){
 
 function update1(dt){
   if (rotating()){
-    const d = norm180(T1.target - T1.theta), step = 200*dt;
-    T1.theta = Math.abs(d) <= step ? T1.target : T1.theta + Math.sign(d)*step;
+    // 의자는 늘 위에서 볼 때 시계 반대 방향으로 돌아요 (지구의 자전 방향과 같게)
+    const d = (((T1.target - T1.theta) % 360) + 360) % 360, step = 200*dt;
+    T1.theta = d <= step ? T1.target : T1.theta + step;
     T1.theta = norm180(T1.theta);
   } else if (T1.auto){
     T1.alpha += 9*dt;
@@ -1337,8 +1338,9 @@ function update3(dt){
   const st=state3(), el=$('st3'); let t, cls='';
   if (!st.mp) t='🌍 달이 망 위치(지구를 사이에 두고 태양 반대쪽)에서 멀어서 월식이 일어나지 않아요.';
   else if (st.total){ t='🔴 개기월식! 달 전체가 지구의 진한 그림자 속에 들어가 붉게 보여요.'; cls='red'; }
-  else if (st.cov>0){ t=`🌗 부분월식! 달의 일부(${Math.round(st.cov*100)}%)가 지구의 그림자에 가려져 어둡게 보여요.`; cls='part'; }
-  else t='🌕 달이 아직 지구의 진한 그림자 밖에 있어요. (보름달)';
+  else if (st.cov>0){ t=`🌗 부분월식! 달의 일부(${Math.round(st.cov*100)}%)가 지구의 진한 그림자(본그림자)에 가려져 어둡게 보여요.`; cls='part'; }
+  else if (st.dc < P3.Rp + P3.MR){ t='🌕 달이 옅은 그림자(반그림자) 속에 있어요. 아주 조금 어두워지지만 눈으로는 알아보기 어려워서, 월식이라고 하지 않아요.'; }
+  else t='🌕 달이 아직 지구의 그림자 밖에 있어요. (보름달)';
   el.textContent=t; el.className='status '+cls;
   const pi=pinInfo3(), ep=$('st3pin');
   if (pi.night && pi.moonUp){ ep.textContent = st.cov>0 ? '📍 관측자: 밤이라 지금 월식을 볼 수 있어요!' : '📍 관측자: 밤이라 달을 볼 수 있어요.'; ep.className='status total'; }
